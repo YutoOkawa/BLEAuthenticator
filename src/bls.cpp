@@ -17,7 +17,7 @@ void CTAPBLE::startService() {
         CHARACTERISTIC_CONTROLPOINT_UUID,
         BLECharacteristic::PROPERTY_WRITE
     );
-    pCpCharacteristic->setValue("test");
+    pCpCharacteristic->setCallbacks(new ControlPointCallbacks());
 
     pStatusCharacteristic = pService->createCharacteristic(
         CHARACTERISTIC_STATUS_UUID,

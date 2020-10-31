@@ -4,6 +4,7 @@
 #include <BLEDevice.h>
 #include <BLEDevice.h>
 #include <BLEUtils.h>
+#include "ctap.hpp"
 
 #define SERVICE_UUID "0000fffd-0000-1000-8000-00805f9b34fb"
 #define CHARACTERISTIC_CONTROLPOINT_UUID "f1d0fff1-deaa-ecee-b42f-c9ba7ed623bb"
@@ -75,11 +76,5 @@ class CTAPBLE {
         BLECharacteristic *getSrbCharacteritsic();
         BLEAdvertising *getAdvertising();
 };
-
-class ControlPointCallbacks: public BLECharacteristicCallbacks {
-    public:
-        void onWrite();
-};
-
 
 #endif
