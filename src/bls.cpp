@@ -1,5 +1,13 @@
 #include "bls.hpp"
 
+const char ServiceConstParam::SERVICE_UUID[37] = "0000fffd-0000-1000-8000-00805f9b34fb";
+
+const char CharacteristicConstParam::CHARACTERISTIC_CONTROLPOINT_UUID[37] = "f1d0fff1-deaa-ecee-b42f-c9ba7ed623bb";
+const char CharacteristicConstParam::CHARACTERISTIC_STATUS_UUID[37] = "f1d0fff2-deaa-ecee-b42f-c9ba7ed623bb";
+const char CharacteristicConstParam::CHARACTERISTIC_CONTROLPOINTLENGTH_UUID[37] = "f1d0fff3-deaa-ecee-b42f-c9ba7ed623bb";
+const char CharacteristicConstParam::CHARACTERISTIC_SERVICEREVISIONBITFIELD_UUID[37] = "f1d0fff4-deaa-ecee-b42f-c9ba7ed623bb";
+const char CharacteristicConstParam::CHARACTERISTIC_SERVICEREVISION_UUID[37] = "00002a28-0000-1000-8000-00805f9b34fb";
+
 void CTAPBLE::init() {
     // Create the BLE Device
     BLEDevice::init("FIDO ABS Authenticator");
@@ -10,36 +18,36 @@ void CTAPBLE::startService() {
     pServer = BLEDevice::createServer();
 
     // Create the BLE Service
-    pService = pServer->createService(SERVICE_UUID);
+    pService = pServer->createService(ServiceConstParam::SERVICE_UUID);
 
     // Create the BLE Characteristic
     pCpCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_CONTROLPOINT_UUID,
+        CharacteristicConstParam::CHARACTERISTIC_CONTROLPOINT_UUID,
         BLECharacteristic::PROPERTY_WRITE
     );
     pCpCharacteristic->setCallbacks(new ControlPointCallbacks());
 
     pStatusCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_STATUS_UUID,
+        CharacteristicConstParam::CHARACTERISTIC_STATUS_UUID,
         BLECharacteristic::PROPERTY_NOTIFY
     );
     pStatusCharacteristic->setValue("test");
 
     pCpLengthCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_CONTROLPOINTLENGTH_UUID,
+        CharacteristicConstParam::CHARACTERISTIC_CONTROLPOINTLENGTH_UUID,
         BLECharacteristic::PROPERTY_READ
     );
     pCpLengthCharacteristic->setValue("test");
 
     pSrbBitCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_SERVICEREVISIONBITFIELD_UUID,
+        CharacteristicConstParam::CHARACTERISTIC_SERVICEREVISIONBITFIELD_UUID,
         BLECharacteristic::PROPERTY_READ | 
         BLECharacteristic::PROPERTY_WRITE
     );
     pSrbBitCharacteristic->setValue("0x20");
 
     pSrbCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_SERVICEREVISION_UUID,
+        CharacteristicConstParam::CHARACTERISTIC_SERVICEREVISION_UUID,
         BLECharacteristic::PROPERTY_READ
     );
     pSrbCharacteristic->setValue("test");
@@ -52,7 +60,7 @@ void CTAPBLE::startService() {
 void CTAPBLE::startAdvertise() {
     // Start Adveritising
     pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(SERVICE_UUID);
+    pAdvertising->addServiceUUID(ServiceConstParam::SERVICE_UUID);
     pAdvertising->setScanResponse(true);
     pAdvertising->setMinPreferred(0x0);
     BLEDevice::startAdvertising();

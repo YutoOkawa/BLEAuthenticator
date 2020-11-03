@@ -6,12 +6,17 @@
 #include <BLEUtils.h>
 #include "ctap.hpp"
 
-#define SERVICE_UUID "0000fffd-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_CONTROLPOINT_UUID "f1d0fff1-deaa-ecee-b42f-c9ba7ed623bb"
-#define CHARACTERISTIC_STATUS_UUID "f1d0fff2-deaa-ecee-b42f-c9ba7ed623bb"
-#define CHARACTERISTIC_CONTROLPOINTLENGTH_UUID "f1d0fff3-deaa-ecee-b42f-c9ba7ed623bb"
-#define CHARACTERISTIC_SERVICEREVISIONBITFIELD_UUID "f1d0fff4-deaa-ecee-b42f-c9ba7ed623bb"
-#define CHARACTERISTIC_SERVICEREVISION_UUID "00002a28-0000-1000-8000-00805f9b34fb"
+struct ServiceConstParam {
+    static const char SERVICE_UUID[37];
+};
+
+struct CharacteristicConstParam {
+    static const char CHARACTERISTIC_CONTROLPOINT_UUID[37];
+    static const char CHARACTERISTIC_STATUS_UUID[37];
+    static const char CHARACTERISTIC_CONTROLPOINTLENGTH_UUID[37];
+    static const char CHARACTERISTIC_SERVICEREVISIONBITFIELD_UUID[37];
+    static const char CHARACTERISTIC_SERVICEREVISION_UUID[37];
+};
 
 class CTAPBLE {
     private:
