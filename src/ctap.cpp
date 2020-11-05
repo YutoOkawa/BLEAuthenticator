@@ -18,6 +18,55 @@ const int ErrorConstParam::ERR_BUSY = 0x06;
 const int ErrorConstParam::ERR_OTHER = 0x7f;
 
 void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
+    Request request;
     data = characteristic->getData();
-    M5.Lcd.println((const char*)data);
+    request = parseRequest(data);
+
+    M5.Lcd.printf("hlen:%d llen:%dCMD:%x\n", request.hlen, request.llen, request.data.commandValue);
+    for (int i=request.hlen; i<request.llen-1; i++) {
+        M5.Lcd.println(request.data.commandParameter[i], HEX);
+    }
+
+    delete[] request.data.commandParameter;
+}
+
+Request ControlPointCallbacks::parseRequest(uint8_t *req) {
+    Request request;
+
+    // Commandを取得
+    request.command = (unsigned int)*req;
+    switch(request.command) {
+        case CommandConstParam::COMMAND_PING:
+            M5.Lcd.println("PING"); break;
+        case CommandConstParam::COMMAND_KEEPALIVE:
+            M5.Lcd.println("KEEP"); break;
+        case CommandConstParam::COMMAND_MSG:
+            M5.Lcd.println("MSG"); break;
+        case CommandConstParam::COMMAND_CANCEL:
+            M5.Lcd.println("CANCEL"); break;
+        default:
+            M5.Lcd.println("ERROR"); break;
+    }
+    req++;
+
+    // HLENを取得
+    request.hlen = (unsigned int)*req;
+    req++;
+
+    // LLENを取得
+    request.llen = (unsigned int)*req;
+    req++;
+
+    // Dataを取得
+    // Command Valueを取得
+    request.data.commandValue = (unsigned int)*req;
+    req++;
+    // Command Parameterを取得
+    request.data.commandParameter = new uint8_t[request.llen];
+    for (int i=request.hlen; i<request.llen-1; i++) {
+        request.data.commandParameter[i] = *req;
+        req++;
+    }
+
+    return request;
 }
