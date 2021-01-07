@@ -142,6 +142,32 @@ struct Request {
      *        Length:s (s is equal to the length)
      */
     Command data;
+
+    /**
+     * @var   error
+     * @brief Request parse Error.
+     */
+    int error;
+};
+
+struct ParseErrorConstParam {
+    /**
+     * @def   PARSE_ERR_CMD
+     * @brief Requestのパース失敗(Command)
+     */
+    static const int PARSE_ERR_CMD;
+
+    /**
+     * @def   PARSE_ERR_HLEN
+     * @brief Requestのパース失敗(HLEN)
+     */
+    static const int PARSE_ERR_HLEN;
+
+    /**
+     * @def   PARSE_ERR_LLEN
+     * @brief Requestのパース失敗(LLEN)
+     */
+    static const int PARSE_ERR_LLEN;
 };
 
 class ControlPointCallbacks: public BLECharacteristicCallbacks {
