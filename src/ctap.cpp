@@ -37,10 +37,12 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     }
 }
 
+// TODO: パース関数のエラー処理
 Request ControlPointCallbacks::parseRequest(uint8_t *req) {
     Request request;
     request.error = 0;
 
+    // TODO: commandがなかった場合のエラー処理
     // Commandを取得
     request.command = (unsigned int)*req;
     switch(request.command) {
@@ -57,14 +59,17 @@ Request ControlPointCallbacks::parseRequest(uint8_t *req) {
     }
     req++;
 
+    // TODO: HLENがなかった場合のエラー処理
     // HLENを取得
     request.hlen = (unsigned int)*req;
     req++;
 
+    // TODO: LLENがなかった場合のエラー処理
     // LLENを取得
     request.llen = (unsigned int)*req;
     req++;
 
+    // TODO: Dataがなかった場合のエラー処理
     // Dataを取得
     // Command Valueを取得
     request.data.commandValue = (unsigned int)*req;
