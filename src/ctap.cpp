@@ -70,3 +70,10 @@ Request ControlPointCallbacks::parseRequest(uint8_t *req) {
 
     return request;
 }
+
+// エラー:DOMException: GATT Error: Not supported.
+// TODO: BLE_Notifyのようにエラーが出ずNotifyできるようにする
+// もしかするとEventListenerが問題かも？
+void StatusCallbacks::onWrite(BLECharacteristic *characteristic) {
+    characteristic->notify();
+}

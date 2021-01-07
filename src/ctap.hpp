@@ -152,4 +152,9 @@ class ControlPointCallbacks: public BLECharacteristicCallbacks {
         Request parseRequest(uint8_t *req);
 };
 
+class StatusCallbacks: public BLECharacteristicCallbacks {
+    public:
+        void onWrite(BLECharacteristic *characteristic);
+};
+
 #endif

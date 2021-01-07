@@ -1,5 +1,5 @@
-#ifndef INCLUDED_bls_h_
-#define INCLUDED_bls_h_
+#ifndef INCLUDED_ble_h_
+#define INCLUDED_ble_h_
 
 #include <BLEDevice.h>
 #include <BLEDevice.h>

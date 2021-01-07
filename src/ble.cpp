@@ -1,6 +1,6 @@
 #include "ble.hpp"
 
-const char ServiceConstParam::SERVICE_UUID[37] = "0000fffd-0000-1000-8000-00805f9b34fb";
+const char ServiceConstParam::SERVICE_UUID[37] = "0000fffd-0000-1000-8000-00805f9b34fa";
 
 const char CharacteristicConstParam::CHARACTERISTIC_CONTROLPOINT_UUID[37] = "f1d0fff1-deaa-ecee-b42f-c9ba7ed623bb";
 const char CharacteristicConstParam::CHARACTERISTIC_STATUS_UUID[37] = "f1d0fff2-deaa-ecee-b42f-c9ba7ed623bb";
@@ -31,13 +31,13 @@ void CTAPBLE::startService() {
         CharacteristicConstParam::CHARACTERISTIC_STATUS_UUID,
         BLECharacteristic::PROPERTY_NOTIFY
     );
-    pStatusCharacteristic->setValue("test");
+    pStatusCharacteristic->setCallbacks(new StatusCallbacks());
 
     pCpLengthCharacteristic = pService->createCharacteristic(
         CharacteristicConstParam::CHARACTERISTIC_CONTROLPOINTLENGTH_UUID,
         BLECharacteristic::PROPERTY_READ
     );
-    pCpLengthCharacteristic->setValue("test");
+    pCpLengthCharacteristic->setValue("0x9b");
 
     pSrbBitCharacteristic = pService->createCharacteristic(
         CharacteristicConstParam::CHARACTERISTIC_SERVICEREVISIONBITFIELD_UUID,
@@ -50,7 +50,7 @@ void CTAPBLE::startService() {
         CharacteristicConstParam::CHARACTERISTIC_SERVICEREVISION_UUID,
         BLECharacteristic::PROPERTY_READ
     );
-    pSrbCharacteristic->setValue("test");
+    pSrbCharacteristic->setValue("NOT recommended.");
 
     // Start the Service
     pService->start();

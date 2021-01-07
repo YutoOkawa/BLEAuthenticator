@@ -1,9 +1,10 @@
 #include <M5StickC.h>
 #include "ble.hpp"
 
+CTAPBLE Device;
+
 void setup() {
     // put your setup code here, to run once:
-    CTAPBLE Device;
     M5.begin();
     Device.init();
     Device.startService();
