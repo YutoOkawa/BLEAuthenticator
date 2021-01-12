@@ -27,6 +27,7 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     request = parseRequest(data);
 
     if (request.error == 0) {
+        // TODO: リクエストに応じた処理の記述
         M5.Lcd.printf("hlen:%d llen:%dCMD:%x\n", request.hlen, request.llen, request.data.commandValue);
         for (int i=request.hlen; i<request.llen-1; i++) {
             M5.Lcd.println(request.data.commandParameter[i], HEX);
