@@ -1,6 +1,8 @@
 #ifndef INCLUDED_authAPI_h_
 #define INCLUDED_authAPI_h_
 
+#include "message.hpp"
+
 /**
  * @struct AuthenticatorAPICommandParam
  * @brief AuthenticatorAPIのコマンド識別子

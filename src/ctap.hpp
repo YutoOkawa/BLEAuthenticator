@@ -6,7 +6,6 @@
 #include <BLEUtils.h>
 #include <M5StickC.h>
 
-#include "message.hpp"
 #include "authAPI.hpp"
 
 /**

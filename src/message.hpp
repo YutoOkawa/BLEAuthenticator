@@ -1,6 +1,8 @@
 #ifndef INCLUDED_message_h_
 #define INCLUDED_message_h_
 
+#include <stdint.h>
+
 /**
  * @struct Command
  * @brief Message Encodingに従ったコマンド形式
