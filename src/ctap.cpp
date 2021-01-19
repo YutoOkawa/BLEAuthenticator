@@ -23,15 +23,22 @@ const int ParseErrorConstParam::PARSE_ERR_LLEN = -3;
 
 void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     Request request;
+    AuthenticatorAPI *authAPI;
     data = characteristic->getData();
     request = parseRequest(data);
 
     if (request.error == 0) {
         // TODO: リクエストに応じた処理の記述
         M5.Lcd.printf("hlen:%d llen:%dCMD:%x\n", request.hlen, request.llen, request.data.commandValue);
-        for (int i=request.hlen; i<request.llen-1; i++) {
-            M5.Lcd.println(request.data.commandParameter[i], HEX);
+        if (checkHasParameters(request.data.commandValue)) { /* パラメータを必要とするもの */
+            authAPI = new AuthenticatorAPI(request.data.commandValue, request.data.commandParameter, request.llen - request.hlen - 1);
+            for (int i=0; i<authAPI->getLength(); i++) {
+                M5.Lcd.println(authAPI->getParameter()[i], HEX);
+            }
+        } else { /* パラメータを必要としなもの */
+            authAPI = new AuthenticatorAPI(request.data.commandValue);
         }
+        M5.Lcd.printf("%x\n", authAPI->getCommand());
         delete[] request.data.commandParameter;
     } else {
         M5.Lcd.printf("Parse Error: %d", request.error);

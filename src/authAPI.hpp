@@ -57,4 +57,45 @@ struct AuthenticatorAPICommandParam {
     static const int COMMAND_VENDORLAST;
 };
 
+/**
+ *  @class AuthenticatorAPI
+ *  @brief AuthenticatorAPIの各メソッドを実行するクラス
+ */
+class AuthenticatorAPI {
+    private:
+        /**
+         * @var command
+         * @brief AuthenticatorAPIのコマンド識別子
+         */
+        unsigned int command;
+
+        /**
+         * @var parameter
+         * @brief AuthenticatorAPIの引数パラメータ
+         */
+        uint8_t *parameter;
+
+        /**
+         *  @var len
+         *  @brief parameterの長さ(llen-hlen)
+         */
+        unsigned int length;
+
+    public:
+        AuthenticatorAPI();
+        AuthenticatorAPI(unsigned int command);
+        AuthenticatorAPI(unsigned int command, uint8_t *parameter, unsigned int length);
+        ~AuthenticatorAPI() {};
+        Response start();
+
+        unsigned int getCommand();
+        uint8_t *getParameter();
+        unsigned int getLength();
+        void setCommand(unsigned int command);
+        void setParameter(uint8_t *parameter);
+        void setLength(unsigned int length);
+};
+
+bool checkHasParameters(unsigned int command);
+
 #endif
