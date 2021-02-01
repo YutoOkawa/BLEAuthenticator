@@ -44,6 +44,106 @@ AuthenticatorAPI::AuthenticatorAPI(unsigned int command, uint8_t *parameter, uns
 }
 
 /**
+ * @brief Commandに対応したAuthenticatorAPIを実行する
+ * 
+ * @return Response - AuthenticatorAPIの返り値
+ */
+Response AuthenticatorAPI::operateCommand() {
+    switch(this->command) {
+        case AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL:
+            return this->authenticatorMakeCredential();
+        case AuthenticatorAPICommandParam::COMMAND_GETASSERTION:
+            return this->authenticatorGetAssertion();
+        case AuthenticatorAPICommandParam::COMMAND_GETINFO:
+            return this->authenticatorGetInfo();
+        case AuthenticatorAPICommandParam::COMMAND_CLIENTPIN:
+            return this->authenticatorClientPIN();
+        case AuthenticatorAPICommandParam::COMMAND_RESET:
+            return this->authenticatorReset();
+        case AuthenticatorAPICommandParam::COMMAND_GETNEXTASSERTION:
+            return this->authenticatorGetNextAssertion();
+        case AuthenticatorAPICommandParam::COMMAND_VENDORFIRST:
+            return this->authenticatorVendorFirst();
+        case AuthenticatorAPICommandParam::COMMAND_VENDORLAST:
+            return this->authenciatorVendorLast();
+        default:
+            throw implement_error("This command isn't implemented.");
+    }
+}
+
+/**
+ * @brief authenticatorMakeCredential(0x01)を実行する
+ * 
+ * @return Response - authenticatorMakeCredentialに対応した返り値
+ */
+Response AuthenticatorAPI::authenticatorMakeCredential() {
+    throw implement_error("Not implement Command Content.");
+}
+
+/**
+ * @brief authenticatorGetAssertion(0x02)を実行する
+ * 
+ * @return Response - authenticatorGetAssertionに対応した返り値
+ */
+Response AuthenticatorAPI::authenticatorGetAssertion() {
+    throw implement_error("Not implement Command Content.");
+}
+
+/**
+ * @brief authenticatorGetInfo(0x04)を実行する
+ * 
+ * @return Response - authenticatorGetInfoに対応した返り値
+ */
+Response AuthenticatorAPI::authenticatorGetInfo() {
+    throw implement_error("Not implement Command Content.");
+}
+
+/**
+ * @brief authenticatorClientPIN(0x06)を実行する
+ * 
+ * @return Response - authenticatorClientPINに対応した返り値
+ */
+Response AuthenticatorAPI::authenticatorClientPIN() {
+    throw implement_error("Not implement Command Content.");
+}
+
+/**
+ * @brief authenticatorReset(0x07)を実行する
+ * 
+ * @return Reponse - authenticatorResetに対応した返り値
+ */
+Response AuthenticatorAPI::authenticatorReset() {
+    throw implement_error("Not implement Command Content.");
+}
+
+/**
+ * @brief authenticatorGetNextAssertion(0x08)を実行する
+ * 
+ * @return Response - authenticatorGetNextAssertionに対応した返り値
+ */
+Response AuthenticatorAPI::authenticatorGetNextAssertion() {
+    throw implement_error("Not implement Command Content.");
+}
+
+/**
+ * @brief authenticatorVendorFirst(0x40)を実行する
+ * 
+ * @return Response - authenticatorVendorFirstに対応した返り値
+ */
+Response AuthenticatorAPI::authenticatorVendorFirst() {
+    throw implement_error("Not implement Command Content.");
+}
+
+/**
+ * @brief authenticatorVendorLast(0xbf)を実行する
+ * 
+ * @return Response - authenticatorVendorLastに対応した返り値
+ */
+Response AuthenticatorAPI::authenciatorVendorLast() {
+    throw implement_error("Not implement Command Content.");
+}
+
+/**
  * @brief getter - command
  * 
  * @return unsigned int - AuthenticatorAPIのコマンド識別子

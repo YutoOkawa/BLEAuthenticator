@@ -2,6 +2,7 @@
 #define INCLUDED_authAPI_h_
 
 #include "message.hpp"
+#include <exception>
 
 /**
  * @struct AuthenticatorAPICommandParam
@@ -86,7 +87,15 @@ class AuthenticatorAPI {
         AuthenticatorAPI(unsigned int command);
         AuthenticatorAPI(unsigned int command, uint8_t *parameter, unsigned int length);
         ~AuthenticatorAPI() {};
-        Response start();
+        Response operateCommand();
+        Response authenticatorMakeCredential();
+        Response authenticatorGetAssertion();
+        Response authenticatorGetInfo();
+        Response authenticatorClientPIN();
+        Response authenticatorReset();
+        Response authenticatorGetNextAssertion();
+        Response authenticatorVendorFirst();
+        Response authenciatorVendorLast();
 
         unsigned int getCommand();
         uint8_t *getParameter();
@@ -97,5 +106,17 @@ class AuthenticatorAPI {
 };
 
 bool checkHasParameters(unsigned int command);
+
+class implement_error : public std::exception {
+    private:
+        const char *msg;
+    public:
+        implement_error(const char* msg) {
+            this->msg = msg;
+        };
+        const char* what() {
+            return this->msg;
+        };
+};
 
 #endif

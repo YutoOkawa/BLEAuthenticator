@@ -24,6 +24,7 @@ const int ParseErrorConstParam::PARSE_ERR_LLEN = -3;
 void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     Request request;
     AuthenticatorAPI *authAPI;
+    Response response;
     data = characteristic->getData();
     request = parseRequest(data);
 
@@ -39,6 +40,12 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
             authAPI = new AuthenticatorAPI(request.data.commandValue);
         }
         M5.Lcd.printf("%x\n", authAPI->getCommand());
+        try {
+            response = authAPI->operateCommand();
+        } catch (implement_error e) {
+            M5.Lcd.printf("%s\n", e.what());
+        }
+
         delete[] request.data.commandParameter;
     } else {
         M5.Lcd.printf("Parse Error: %d", request.error);
@@ -85,7 +92,7 @@ Request ControlPointCallbacks::parseRequest(uint8_t *req) {
     // Command Parameterを取得
     request.data.commandParameter = new uint8_t[request.llen-1];
     for (int i=request.hlen; i<request.llen-1; i++) {
-        request.data.commandParameter[i] = *req;
+        request.data.commandParameter[i] = (uint8_t)*req;
         req++;
     }
 
