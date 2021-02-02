@@ -144,32 +144,18 @@ struct Request {
     Command data;
 };
 
-struct ParseErrorConstParam {
-    /**
-     * @def   PARSE_ERR_CMD
-     * @brief Requestのパース失敗(Command)
-     */
-    static const int PARSE_ERR_CMD;
-
-    /**
-     * @def   PARSE_ERR_HLEN
-     * @brief Requestのパース失敗(HLEN)
-     */
-    static const int PARSE_ERR_HLEN;
-
-    /**
-     * @def   PARSE_ERR_LLEN
-     * @brief Requestのパース失敗(LLEN)
-     */
-    static const int PARSE_ERR_LLEN;
-};
-
 class ControlPointCallbacks: public BLECharacteristicCallbacks {
     private:
-        uint8_t* data = new uint8_t[128];
+        uint8_t* data;
     public:
         void onWrite(BLECharacteristic *characteristic);
         Request parseRequest(uint8_t *req);
+        Response operateCTAPCommand(Request request);
+        Response parsePingCommand(Request request);
+        Response parseKeepAliveCommand(Request request);
+        Response parseMsgCommand(Request request);
+        Response parseCancelCommand(Request request);
+        Response parseErrorCommand(Request request);
 };
 
 class StatusCallbacks: public BLECharacteristicCallbacks {

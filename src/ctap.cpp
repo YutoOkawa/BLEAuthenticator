@@ -17,34 +17,17 @@ const int ErrorConstParam::ERR_REQ_TIMEOUT = 0x05;
 const int ErrorConstParam::ERR_BUSY = 0x06;
 const int ErrorConstParam::ERR_OTHER = 0x7f;
 
-const int ParseErrorConstParam::PARSE_ERR_CMD = -1;
-const int ParseErrorConstParam::PARSE_ERR_HLEN = -2;
-const int ParseErrorConstParam::PARSE_ERR_LLEN = -3;
-
 void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     Request request;
-    AuthenticatorAPI *authAPI;
     Response response;
+
     data = characteristic->getData();
     request = parseRequest(data);
-
-    // TODO: リクエストに応じた処理の記述
-    M5.Lcd.printf("hlen:%d llen:%dCMD:%x\n", request.hlen, request.llen, request.data.commandValue);
-    if (checkHasParameters(request.data.commandValue)) { /* パラメータを必要とするもの */
-        authAPI = new AuthenticatorAPI(request.data.commandValue, request.data.commandParameter, request.llen - request.hlen - 1);
-        for (int i=0; i<authAPI->getLength(); i++) {
-            M5.Lcd.println(authAPI->getParameter()[i], HEX);
-        }
-    } else { /* パラメータを必要としなもの */
-        authAPI = new AuthenticatorAPI(request.data.commandValue);
-    }
-    M5.Lcd.printf("%x\n", authAPI->getCommand());
     try {
-        response = authAPI->operateCommand();
+        response = operateCTAPCommand(request);
     } catch (implement_error e) {
-        M5.Lcd.printf("%s\n", e.what());
+        M5.Lcd.println(e.what());
     }
-
     delete[] request.data.commandParameter;
 }
 
@@ -55,18 +38,6 @@ Request ControlPointCallbacks::parseRequest(uint8_t *req) {
     // TODO: commandがなかった場合のエラー処理
     // Commandを取得
     request.command = (unsigned int)*req;
-    switch(request.command) {
-        case CommandConstParam::COMMAND_PING:
-            M5.Lcd.println("PING"); break;
-        case CommandConstParam::COMMAND_KEEPALIVE:
-            M5.Lcd.println("KEEP"); break;
-        case CommandConstParam::COMMAND_MSG:
-            M5.Lcd.println("MSG"); break;
-        case CommandConstParam::COMMAND_CANCEL:
-            M5.Lcd.println("CANCEL"); break;
-        default:
-            M5.Lcd.println("ERROR"); break;
-    }
     req++;
 
     // TODO: HLENがなかった場合のエラー処理
@@ -92,6 +63,68 @@ Request ControlPointCallbacks::parseRequest(uint8_t *req) {
     }
 
     return request;
+}
+
+Response ControlPointCallbacks::operateCTAPCommand(Request request) {
+    Response response;
+    
+    switch (request.command) {
+        case CommandConstParam::COMMAND_PING:
+            response = parsePingCommand(request);
+
+        case CommandConstParam::COMMAND_KEEPALIVE:
+            response = parseKeepAliveCommand(request);
+
+        case CommandConstParam::COMMAND_MSG:
+            response = parseMsgCommand(request);
+
+        case CommandConstParam::COMMAND_CANCEL:
+            response = parseCancelCommand(request);
+
+        case CommandConstParam::COMMAND_ERROR:
+            response = parseErrorCommand(request);
+
+        default:
+            throw implement_error("Not implement CTAP Command.");
+    }
+}
+
+Response ControlPointCallbacks::parsePingCommand(Request request) {
+    throw implement_error("Not implement PING Command.");
+}
+
+Response ControlPointCallbacks::parseKeepAliveCommand(Request request) {
+    throw implement_error("Not implement KEEPALIVE Command.");
+}
+
+Response ControlPointCallbacks::parseMsgCommand(Request request) {
+    AuthenticatorAPI *authAPI;
+    Response response;
+
+    if (checkHasParameters(request.data.commandValue)) { /* パラメータを必要とするもの */
+        authAPI = new AuthenticatorAPI(request.data.commandValue, request.data.commandParameter, request.llen - request.hlen - 1);
+        for (int i=0; i<authAPI->getLength(); i++) {
+            M5.Lcd.println(authAPI->getParameter()[i], HEX);
+        }
+    } else { /* パラメータを必要としなもの */
+        authAPI = new AuthenticatorAPI(request.data.commandValue);
+    }
+
+    try {
+        response = authAPI->operateCommand();
+    } catch (implement_error e) {
+        throw implement_error(e.what());
+    }
+
+    return response;
+}
+
+Response ControlPointCallbacks::parseCancelCommand(Request request) {
+    throw implement_error("Not implement CANCEL Command.");
+}
+
+Response ControlPointCallbacks::parseErrorCommand(Request request) {
+    throw implement_error("Not implement ERROR Command.");
 }
 
 // エラー:DOMException: GATT Error: Not supported.
