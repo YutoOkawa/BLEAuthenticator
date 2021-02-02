@@ -6,6 +6,7 @@ CTAPBLE Device;
 void setup() {
     // put your setup code here, to run once:
     M5.begin();
+    Serial.begin(9600);
     Device.init();
     Device.startService();
     M5.Lcd.println("FIDO Authenticator");

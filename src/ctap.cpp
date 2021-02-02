@@ -26,7 +26,7 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     try {
         response = operateCTAPCommand(request);
     } catch (implement_error e) {
-        M5.Lcd.println(e.what());
+        Serial.println(e.what());
     }
     delete[] request.data.commandParameter;
 }
@@ -103,9 +103,6 @@ Response ControlPointCallbacks::parseMsgCommand(Request request) {
 
     if (checkHasParameters(request.data.commandValue)) { /* パラメータを必要とするもの */
         authAPI = new AuthenticatorAPI(request.data.commandValue, request.data.commandParameter, request.llen - request.hlen - 1);
-        for (int i=0; i<authAPI->getLength(); i++) {
-            M5.Lcd.println(authAPI->getParameter()[i], HEX);
-        }
     } else { /* パラメータを必要としなもの */
         authAPI = new AuthenticatorAPI(request.data.commandValue);
     }
