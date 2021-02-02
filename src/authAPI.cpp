@@ -49,7 +49,7 @@ AuthenticatorAPI::AuthenticatorAPI(unsigned int command, uint8_t *parameter, uns
  * @return Response - AuthenticatorAPIの返り値
  */
 Response AuthenticatorAPI::operateCommand() {
-    switch(this->command) {
+    switch(this->command) { /* Commandに応じた関数を呼び出す */
         case AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL:
             return this->authenticatorMakeCredential();
 
@@ -74,7 +74,7 @@ Response AuthenticatorAPI::operateCommand() {
         case AuthenticatorAPICommandParam::COMMAND_VENDORLAST:
             return this->authenciatorVendorLast();
             
-        default:
+        default: /* Commandが存在しない場合 */
             throw implement_error("This command isn't implemented.");
     }
 }

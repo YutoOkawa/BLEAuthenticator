@@ -25,13 +25,19 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     request = parseRequest(data);
     try {
         response = operateCTAPCommand(request);
-    } catch (implement_error e) {
+    } catch (implement_error e) { /* 未実装コマンドだった場合 */
         Serial.println(e.what());
     }
     delete[] request.data.commandParameter;
 }
 
 // TODO: パース関数のエラー処理
+/**
+ * @brief dataをパースし、Requestを返す
+ * 
+ * @param req - characteristicに書き込まれたdata
+ * @return Request - CTAPに沿ったRequest形式
+ */
 Request ControlPointCallbacks::parseRequest(uint8_t *req) {
     Request request;
 
@@ -65,10 +71,16 @@ Request ControlPointCallbacks::parseRequest(uint8_t *req) {
     return request;
 }
 
+/**
+ * @brief CTAPのコマンドに対応した関数を呼び出す 
+ * 
+ * @param request - CTAPに沿ったRequest形式
+ * @return Response - CTAPに沿ったResponse形式
+ */
 Response ControlPointCallbacks::operateCTAPCommand(Request request) {
     Response response;
     
-    switch (request.command) {
+    switch (request.command) { /* Commandに応じた関数を呼び出す */
         case CommandConstParam::COMMAND_PING:
             response = parsePingCommand(request);
 
@@ -84,19 +96,37 @@ Response ControlPointCallbacks::operateCTAPCommand(Request request) {
         case CommandConstParam::COMMAND_ERROR:
             response = parseErrorCommand(request);
 
-        default:
+        default: /* Commandが存在しない場合 */
             throw implement_error("Not implement CTAP Command.");
     }
 }
 
+/**
+ * @brief PINGコマンドの処理
+ * 
+ * @param request - CTAPに沿ったRequest形式
+ * @return Response - PINGコマンドの返り値
+ */
 Response ControlPointCallbacks::parsePingCommand(Request request) {
     throw implement_error("Not implement PING Command.");
 }
 
+/**
+ * @brief KEEPALIVEのコマンド処理
+ * 
+ * @param request - CTAPに沿ったRequest形式
+ * @return Response - KEEPALIVEコマンドの返り値
+ */
 Response ControlPointCallbacks::parseKeepAliveCommand(Request request) {
     throw implement_error("Not implement KEEPALIVE Command.");
 }
 
+/**
+ * @brief MSGコマンドの処理
+ * 
+ * @param request - CTAPに沿ったRequest形式
+ * @return Response - MSGコマンドの返り値 
+ */
 Response ControlPointCallbacks::parseMsgCommand(Request request) {
     AuthenticatorAPI *authAPI;
     Response response;
@@ -109,17 +139,29 @@ Response ControlPointCallbacks::parseMsgCommand(Request request) {
 
     try {
         response = authAPI->operateCommand();
-    } catch (implement_error e) {
+    } catch (implement_error e) { /* 未実装コマンドだった場合 */
         throw implement_error(e.what());
     }
 
     return response;
 }
 
+/**
+ * @brief CANCELコマンドの処理
+ * 
+ * @param request - CTAPに沿ったRequest形式
+ * @return Response - CANCELコマンドの返り値
+ */
 Response ControlPointCallbacks::parseCancelCommand(Request request) {
     throw implement_error("Not implement CANCEL Command.");
 }
 
+/**
+ * @brief ERRORコマンドの処理
+ * 
+ * @param request - CTAPに沿ったRequest形式
+ * @return Response - ERRORコマンドの返り値
+ */
 Response ControlPointCallbacks::parseErrorCommand(Request request) {
     throw implement_error("Not implement ERROR Command.");
 }
