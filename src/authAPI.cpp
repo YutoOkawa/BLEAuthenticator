@@ -85,7 +85,7 @@ Response AuthenticatorAPI::operateCommand() {
  * @return Response - authenticatorMakeCredentialに対応した返り値
  */
 Response AuthenticatorAPI::authenticatorMakeCredential() {
-    throw implement_error("Not implement Command Content.");
+    throw implement_error("Not implement MakeCredential Content.");
 }
 
 /**
@@ -94,7 +94,7 @@ Response AuthenticatorAPI::authenticatorMakeCredential() {
  * @return Response - authenticatorGetAssertionに対応した返り値
  */
 Response AuthenticatorAPI::authenticatorGetAssertion() {
-    throw implement_error("Not implement Command Content.");
+    throw implement_error("Not implement GetAssertion Content.");
 }
 
 /**
@@ -103,7 +103,7 @@ Response AuthenticatorAPI::authenticatorGetAssertion() {
  * @return Response - authenticatorGetInfoに対応した返り値
  */
 Response AuthenticatorAPI::authenticatorGetInfo() {
-    throw implement_error("Not implement Command Content.");
+    throw implement_error("Not implement GetInfo Content.");
 }
 
 /**
@@ -112,7 +112,7 @@ Response AuthenticatorAPI::authenticatorGetInfo() {
  * @return Response - authenticatorClientPINに対応した返り値
  */
 Response AuthenticatorAPI::authenticatorClientPIN() {
-    throw implement_error("Not implement Command Content.");
+    throw implement_error("Not implement ClientPIN Content.");
 }
 
 /**
@@ -121,7 +121,7 @@ Response AuthenticatorAPI::authenticatorClientPIN() {
  * @return Reponse - authenticatorResetに対応した返り値
  */
 Response AuthenticatorAPI::authenticatorReset() {
-    throw implement_error("Not implement Command Content.");
+    throw implement_error("Not implement Reset Content.");
 }
 
 /**
@@ -130,7 +130,7 @@ Response AuthenticatorAPI::authenticatorReset() {
  * @return Response - authenticatorGetNextAssertionに対応した返り値
  */
 Response AuthenticatorAPI::authenticatorGetNextAssertion() {
-    throw implement_error("Not implement Command Content.");
+    throw implement_error("Not implement GetNextAssertion Content.");
 }
 
 /**
@@ -139,7 +139,7 @@ Response AuthenticatorAPI::authenticatorGetNextAssertion() {
  * @return Response - authenticatorVendorFirstに対応した返り値
  */
 Response AuthenticatorAPI::authenticatorVendorFirst() {
-    throw implement_error("Not implement Command Content.");
+    throw implement_error("Not implement VendorFirst Content.");
 }
 
 /**
@@ -148,7 +148,7 @@ Response AuthenticatorAPI::authenticatorVendorFirst() {
  * @return Response - authenticatorVendorLastに対応した返り値
  */
 Response AuthenticatorAPI::authenciatorVendorLast() {
-    throw implement_error("Not implement Command Content.");
+    throw implement_error("Not implement VendorLast Content.");
 }
 
 /**
