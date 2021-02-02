@@ -52,20 +52,28 @@ Response AuthenticatorAPI::operateCommand() {
     switch(this->command) {
         case AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL:
             return this->authenticatorMakeCredential();
+
         case AuthenticatorAPICommandParam::COMMAND_GETASSERTION:
             return this->authenticatorGetAssertion();
+
         case AuthenticatorAPICommandParam::COMMAND_GETINFO:
             return this->authenticatorGetInfo();
+
         case AuthenticatorAPICommandParam::COMMAND_CLIENTPIN:
             return this->authenticatorClientPIN();
+
         case AuthenticatorAPICommandParam::COMMAND_RESET:
             return this->authenticatorReset();
+
         case AuthenticatorAPICommandParam::COMMAND_GETNEXTASSERTION:
             return this->authenticatorGetNextAssertion();
+
         case AuthenticatorAPICommandParam::COMMAND_VENDORFIRST:
             return this->authenticatorVendorFirst();
+
         case AuthenticatorAPICommandParam::COMMAND_VENDORLAST:
             return this->authenciatorVendorLast();
+            
         default:
             throw implement_error("This command isn't implemented.");
     }
