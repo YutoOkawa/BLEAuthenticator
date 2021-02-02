@@ -142,12 +142,6 @@ struct Request {
      *        Length:s (s is equal to the length)
      */
     Command data;
-
-    /**
-     * @var   error
-     * @brief Request parse Error.
-     */
-    int error;
 };
 
 struct ParseErrorConstParam {

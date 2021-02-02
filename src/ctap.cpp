@@ -28,34 +28,29 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     data = characteristic->getData();
     request = parseRequest(data);
 
-    if (request.error == 0) {
-        // TODO: リクエストに応じた処理の記述
-        M5.Lcd.printf("hlen:%d llen:%dCMD:%x\n", request.hlen, request.llen, request.data.commandValue);
-        if (checkHasParameters(request.data.commandValue)) { /* パラメータを必要とするもの */
-            authAPI = new AuthenticatorAPI(request.data.commandValue, request.data.commandParameter, request.llen - request.hlen - 1);
-            for (int i=0; i<authAPI->getLength(); i++) {
-                M5.Lcd.println(authAPI->getParameter()[i], HEX);
-            }
-        } else { /* パラメータを必要としなもの */
-            authAPI = new AuthenticatorAPI(request.data.commandValue);
+    // TODO: リクエストに応じた処理の記述
+    M5.Lcd.printf("hlen:%d llen:%dCMD:%x\n", request.hlen, request.llen, request.data.commandValue);
+    if (checkHasParameters(request.data.commandValue)) { /* パラメータを必要とするもの */
+        authAPI = new AuthenticatorAPI(request.data.commandValue, request.data.commandParameter, request.llen - request.hlen - 1);
+        for (int i=0; i<authAPI->getLength(); i++) {
+            M5.Lcd.println(authAPI->getParameter()[i], HEX);
         }
-        M5.Lcd.printf("%x\n", authAPI->getCommand());
-        try {
-            response = authAPI->operateCommand();
-        } catch (implement_error e) {
-            M5.Lcd.printf("%s\n", e.what());
-        }
-
-        delete[] request.data.commandParameter;
-    } else {
-        M5.Lcd.printf("Parse Error: %d", request.error);
+    } else { /* パラメータを必要としなもの */
+        authAPI = new AuthenticatorAPI(request.data.commandValue);
     }
+    M5.Lcd.printf("%x\n", authAPI->getCommand());
+    try {
+        response = authAPI->operateCommand();
+    } catch (implement_error e) {
+        M5.Lcd.printf("%s\n", e.what());
+    }
+
+    delete[] request.data.commandParameter;
 }
 
 // TODO: パース関数のエラー処理
 Request ControlPointCallbacks::parseRequest(uint8_t *req) {
     Request request;
-    request.error = 0;
 
     // TODO: commandがなかった場合のエラー処理
     // Commandを取得
