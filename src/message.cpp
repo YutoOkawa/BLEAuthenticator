@@ -1,5 +1,6 @@
 #include "message.hpp"
 
+/* ----------------------StatusCodeParam---------------------- */
 /** @brief Indicates successful response. (0x00) */
 const int StatusCodeParam::CTAP1_ERR_SUCCESS = 0x00;
 
@@ -145,6 +146,7 @@ const int StatusCodeParam::CTAP2_ERR_VENDOR_FIRST = 0xF0;
 const int StatusCodeParam::CTAP2_ERR_VENDOR_LAST = 0xFF;
 
 
+/* ----------------------MakeCredentialParam---------------------- */
 /** @brief byte string (CBOR major type 2) */
 const int MakeCredentialParam::KEY_CLIENT_DATA_HASH = 0x01;
 
@@ -173,6 +175,7 @@ const int MakeCredentialParam::KEY_PIN_AUTH = 0x08;
 const int MakeCredentialParam::KEY_PIN_PROTOCOL = 0x09;
 
 
+/* ----------------------GetAssertionParam---------------------- */
 /** @brief UTF-8 encoded text string (CBOR major type 3). */
 const int GetAssertionParam::KEY_RPID = 0x01;
 
@@ -195,6 +198,7 @@ const int GetAssertionParam::KEY_PIN_AUTH = 0x06;
 const int GetAssertionParam::KEY_PIN_PROTOCOL = 0x07;
 
 
+/* ----------------------ClientPINParam---------------------- */
 /** @brief Unsigned Integer. (CBOR major type 0) */
 const int ClientPINParam::KEY_PIN_PROTOCOL = 0x01;
 
@@ -214,6 +218,7 @@ const int ClientPINParam::KEY_NEW_PIN_ENC = 0x05;
 const int ClientPINParam::KEY_PIN_HASH_ENC = 0x06;
 
 
+/* ----------------------MakeCredentialResponseParam---------------------- */
 /** @brief text string (CBOR major type 3). */
 const int MakeCredentialResponseParam::KEY_FMT = 0x01;
 
@@ -224,6 +229,7 @@ const int MakeCredentialResponseParam::KEY_AUTH_DATA = 0x02;
 const int MakeCredentialResponseParam::KEY_ATT_STMT = 0x03;
 
 
+/* ----------------------GetAssertionResponseParam---------------------- */
 /** @brief definite length map (CBOR major type 5). */
 const int GetAssertionResponseParam::KEY_CREDENTIAL = 0x01;
 
@@ -240,6 +246,7 @@ const int GetAssertionResponseParam::KEY_PUBKEY_CRED_USER_ENTITY = 0x04;
 const int GetAssertionResponseParam::KEY_SIGNATURE = 0x05;
 
 
+/* ----------------------GetNextAssertionResponseParam---------------------- */
 /** @brief definite length map (CBOR major type 5). */
 const int GetNextAssertionResponseParam::KEY_CREDENTIAL = 0x01;
 
@@ -253,6 +260,7 @@ const int GetNextAssertionResponseParam::KEY_SIGNATURE = 0x03;
 const int GetNextAssertionResponseParam::KEY_PUBKEY_CRED_USER_ENTITY = 0x04;
 
 
+/* ----------------------GetInfoResponseParam---------------------- */
 /** @brief definite length array (CBOR major type 4) of UTF-8 encoded strings (CBOR major type 3). */
 const int GetInfoResponseParam::KEY_VERSIONS = 0x01;
 
@@ -272,6 +280,7 @@ const int GetInfoResponseParam::KEY_MAX_MSG_SIZE = 0x05;
 const int GetInfoResponseParam::KEY_PIN_PROTOCOLS = 0x06;
 
 
+/* ----------------------ClientPINResponseParam---------------------- */
 /** @brief Authenticator public key in COSE_Key format. The COSE_Key-encoded public key MUST contain the optional "alg" parameter and MUST NOT contain any other optional parameters. The "alg" parameter MUST contain a COSEAlgorithmIdentifier value. */
 const int ClientPINResponseParam::KEY_KEY_AGREEMENT = 0x01;
 

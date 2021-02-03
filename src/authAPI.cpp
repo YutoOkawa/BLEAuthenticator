@@ -1,5 +1,6 @@
 #include "authAPI.hpp"
 
+/* ----------------------AuthenticatorAPICommandParam---------------------- */
 /** @brief authenticatorMakeCredentialのコマンド識別子(0x01) */
 const int AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL = 0x01;
 
@@ -24,6 +25,8 @@ const int AuthenticatorAPICommandParam::COMMAND_VENDORFIRST = 0x40;
 /** @brief authenticatorVendorLastのコマンド識別子(0xbf) */
 const int AuthenticatorAPICommandParam::COMMAND_VENDORLAST = 0xbf;
 
+
+/* ----------------------AuthenticatorAPI---------------------- */
 /**
  * @brief Construct a new AuthenticatorAPI::AuthenticatorAPI object
  * 

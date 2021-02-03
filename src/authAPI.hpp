@@ -68,6 +68,10 @@ class AuthenticatorAPI {
 
 bool checkHasParameters(unsigned int command);
 
+/**
+ * @class implement_error
+ * @brief 未実装のエラー定義
+ */
 class implement_error : public std::exception {
     private:
         const char *msg;

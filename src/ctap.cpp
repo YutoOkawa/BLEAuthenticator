@@ -1,5 +1,6 @@
 #include "ctap.hpp"
 
+/* ----------------------CommandConstParam---------------------- */
 /** @brief PINGコマンドの識別子(0x81)  */
 const int CommandConstParam::COMMAND_PING = 0x81;
 
@@ -16,6 +17,7 @@ const int CommandConstParam::COMMAND_CANCEL = 0xbe;
 const int CommandConstParam::COMMAND_ERROR = 0xbf;
 
 
+/* ----------------------KeepAliveConstParam---------------------- */
 /** @brief Status:PROCESSINGの識別子(0x01) */
 const int KeepAliveConstParam::KEEPALIVE_PROCESSING = 0x01;
 
@@ -23,6 +25,7 @@ const int KeepAliveConstParam::KEEPALIVE_PROCESSING = 0x01;
 const int KeepAliveConstParam::KEEPALIVE_UP_NEEDED = 0x02;
 
 
+/* ----------------------ErrorConstParam---------------------- */
 /** @brief The command in the request is unknown/invalid (0x01) */
 const int ErrorConstParam::ERR_INVALID_CMD = 0x01;
 
@@ -44,6 +47,8 @@ const int ErrorConstParam::ERR_BUSY = 0x06;
 /** @brief Other, unspecified error (0x7f) */
 const int ErrorConstParam::ERR_OTHER = 0x7f;
 
+
+/* ----------------------ControlPointCallbacks---------------------- */
 void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     Request request;
     Response response;
@@ -193,6 +198,8 @@ Response ControlPointCallbacks::parseErrorCommand(Request request) {
     throw implement_error("Not implement ERROR Command.");
 }
 
+
+/* ----------------------StatusCallbacks---------------------- */
 // エラー:DOMException: GATT Error: Not supported.
 // TODO: BLE_Notifyのようにエラーが出ずNotifyできるようにする
 // もしかするとEventListenerが問題かも？
