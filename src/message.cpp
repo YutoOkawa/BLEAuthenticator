@@ -243,7 +243,7 @@ const int GetAssertionResponseParam::KEY_SIGNATURE = 0x03;
 const int GetAssertionResponseParam::KEY_PUBKEY_CRED_USER_ENTITY = 0x04;
 
 /** @brief unsigned integer(CBOR major type 0). */
-const int GetAssertionResponseParam::KEY_SIGNATURE = 0x05;
+const int GetAssertionResponseParam::KEY_NUMBER_OF_CRED = 0x05;
 
 
 /* ----------------------GetNextAssertionResponseParam---------------------- */
