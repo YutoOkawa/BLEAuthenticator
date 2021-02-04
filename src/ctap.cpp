@@ -114,23 +114,25 @@ Response ControlPointCallbacks::operateCTAPCommand(Request request) {
     
     switch (request.command) { /* Commandに応じた関数を呼び出す */
         case CommandConstParam::COMMAND_PING:
-            response = parsePingCommand(request);
+            response = parsePingCommand(request); break;
 
         case CommandConstParam::COMMAND_KEEPALIVE:
-            response = parseKeepAliveCommand(request);
+            response = parseKeepAliveCommand(request); break;
 
         case CommandConstParam::COMMAND_MSG:
-            response = parseMsgCommand(request);
+            response = parseMsgCommand(request); break;
 
         case CommandConstParam::COMMAND_CANCEL:
-            response = parseCancelCommand(request);
+            response = parseCancelCommand(request); break;
 
         case CommandConstParam::COMMAND_ERROR:
-            response = parseErrorCommand(request);
+            response = parseErrorCommand(request); break;
 
         default: /* Commandが存在しない場合 */
-            throw implement_error("Not implement CTAP Command.");
+            throw implement_error("Not implement CTAP Command."); break;
     }
+
+    return response;
 }
 
 /**

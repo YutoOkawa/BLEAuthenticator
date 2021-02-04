@@ -26,6 +26,15 @@ const int AuthenticatorAPICommandParam::COMMAND_VENDORFIRST = 0x40;
 const int AuthenticatorAPICommandParam::COMMAND_VENDORLAST = 0xbf;
 
 
+/* ----------------------DebugUtility---------------------- */
+void responseSerialDebug(Response response, size_t data_len) {
+    Serial.printf("Response Status:%x\n", response.status);
+    for (size_t i=0; i < data_len; ++i) {
+        Serial.printf("%.2x", response.responseData[i]);
+    }
+}
+
+
 /* ----------------------AuthenticatorAPI---------------------- */
 /**
  * @brief Construct a new AuthenticatorAPI::AuthenticatorAPI object
@@ -69,31 +78,31 @@ AuthenticatorAPI::AuthenticatorAPI(unsigned int command, uint8_t *parameter, uns
 Response AuthenticatorAPI::operateCommand() {
     switch(this->command) { /* Commandに応じた関数を呼び出す */
         case AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL:
-            return this->authenticatorMakeCredential();
+            return this->authenticatorMakeCredential(); break;
 
         case AuthenticatorAPICommandParam::COMMAND_GETASSERTION:
-            return this->authenticatorGetAssertion();
+            return this->authenticatorGetAssertion(); break;
 
         case AuthenticatorAPICommandParam::COMMAND_GETINFO:
-            return this->authenticatorGetInfo();
+            return this->authenticatorGetInfo(); break;
 
         case AuthenticatorAPICommandParam::COMMAND_CLIENTPIN:
-            return this->authenticatorClientPIN();
+            return this->authenticatorClientPIN(); break;
 
         case AuthenticatorAPICommandParam::COMMAND_RESET:
-            return this->authenticatorReset();
+            return this->authenticatorReset(); break;
 
         case AuthenticatorAPICommandParam::COMMAND_GETNEXTASSERTION:
-            return this->authenticatorGetNextAssertion();
+            return this->authenticatorGetNextAssertion(); break;
 
         case AuthenticatorAPICommandParam::COMMAND_VENDORFIRST:
-            return this->authenticatorVendorFirst();
+            return this->authenticatorVendorFirst(); break;
 
         case AuthenticatorAPICommandParam::COMMAND_VENDORLAST:
-            return this->authenciatorVendorLast();
+            return this->authenciatorVendorLast(); break;
             
         default: /* Commandが存在しない場合 */
-            throw implement_error("This command isn't implemented.");
+            throw implement_error("This command isn't implemented."); break;
     }
 }
 
@@ -121,7 +130,92 @@ Response AuthenticatorAPI::authenticatorGetAssertion() {
  * @return Response - authenticatorGetInfoに対応した返り値
  */
 Response AuthenticatorAPI::authenticatorGetInfo() {
-    throw implement_error("Not implement GetInfo Content.");
+    /**
+     * authenticatorGetInfo Response
+     */
+    Response response;
+
+    /**
+     * MemberName       Required?
+     * -------------    ----------
+     * versions:        Required
+     * extensions:      Optional 
+     * aaguid:          Required
+     * options:         Optional
+     * maxMsgSize:      Optional
+     * pinProtocols:    Optional
+     */
+    CBORPair response_data = CBORPair(100);
+
+    /**
+     *  MemberName: versions
+     *  DataType: Sequence of String
+     *  Required?: Required
+     */
+    CBORArray cbor_versions = CBORArray(20);
+    const char *versions[2] = {"CTAP_ABS", "FIDO_ABS"};
+    cbor_versions.append(versions, 2);
+    response_data.append(GetInfoResponseParam::KEY_VERSIONS, cbor_versions);
+
+    /**
+     * MemberName: extensions
+     * DataType: Sequence of String
+     * Required?: Optional
+     */
+    CBORArray cbor_extensions = CBORArray(20);
+    const char *extensions[1] = {"hmac-secret"};
+    cbor_extensions.append(extensions, 1);
+    response_data.append(GetInfoResponseParam::KEY_EXTENSIONS, cbor_extensions);
+
+    /**
+     * MemberName: aaguid
+     * DataType: Byte String
+     * Required?: Required
+     */
+    const char *aaguid = "FIDOABSAUTHDAAAA";
+    response_data.append(GetInfoResponseParam::KEY_AAGUID, aaguid);
+
+
+    /**
+     * MemberName: options
+     * DataType: Map
+     * Required?: Optional
+     */
+    CBORPair cbor_options = CBORPair(100);
+    cbor_options.append("plat", false);
+    cbor_options.append("rk", false);
+    cbor_options.append("clientPin", false);
+    cbor_options.append("up", false);
+    cbor_options.append("uv", false);
+    response_data.append(GetInfoResponseParam::KEY_OPTIONS, cbor_options);
+
+
+    /**
+     * MemberName: maxMsgSize
+     * DataType: Unsigned Integer
+     * Required?: Optional
+     */
+    unsigned int maxMsgSize = 1200;
+    response_data.append(GetInfoResponseParam::KEY_MAX_MSG_SIZE, maxMsgSize);
+
+
+    /**
+     * MemberName: pinProtocols
+     * DataType: Array Of Unsigned Integers
+     * Required?: Optional
+     */
+    CBORArray cbor_pinProtocols = CBORArray(20);
+    const unsigned int pinProtocols[1] = {0x01};
+    cbor_pinProtocols.append(pinProtocols, 1);
+    response_data.append(GetInfoResponseParam::KEY_PIN_PROTOCOLS, cbor_pinProtocols);
+
+
+    response.responseData = response_data.to_CBOR();
+    responseSerialDebug(response, response_data.length());
+
+    return response;
+
+    // throw implement_error("Not implement GetInfo Content.");
 }
 
 /**

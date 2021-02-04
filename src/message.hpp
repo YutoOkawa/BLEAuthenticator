@@ -18,7 +18,7 @@ struct Command {
  */
 struct Response {
     unsigned int status = 0x00;
-    uint8_t *responseData;
+    const uint8_t *responseData;
 };
 
 /**

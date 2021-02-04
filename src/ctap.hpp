@@ -4,7 +4,6 @@
 #include <BLEDevice.h>
 #include <BLEDevice.h>
 #include <BLEUtils.h>
-#include <M5StickC.h>
 
 #include "authAPI.hpp"
 
