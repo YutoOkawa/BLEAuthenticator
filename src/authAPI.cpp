@@ -172,8 +172,13 @@ Response AuthenticatorAPI::authenticatorGetInfo() {
      * DataType: Byte String
      * Required?: Required
      */
-    const char *aaguid = "FIDOABSAUTHDAAAA";
-    response_data.append(GetInfoResponseParam::KEY_AAGUID, aaguid);
+    const uint8_t aaguid[] = {
+        0xF8, 0xA0, 0x11, 0xF3, 0x8C, 0x0A, 0x4D, 
+        0x15, 0x80, 0x06, 0x17, 0x11, 0x1F, 0x9E, 0xDC, 0x7D
+    };
+    CBOR cbor_aaguid = CBOR();
+    cbor_aaguid.encode(aaguid, 16);
+    response_data.append(GetInfoResponseParam::KEY_AAGUID, cbor_aaguid);
 
 
     /**
