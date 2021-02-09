@@ -112,6 +112,91 @@ Response AuthenticatorAPI::operateCommand() {
  * @return Response - authenticatorMakeCredentialに対応した返り値
  */
 Response AuthenticatorAPI::authenticatorMakeCredential() {
+    /**
+     * authenticatorMakeCredential Response
+     */
+    Response response;
+
+    /**
+     * MemberName           Data type           Required?
+     * -------------        ----------          ----------
+     * clientDataHash:      Byte Array          Required
+     * rp:                  PubkeyCredEntity    Required 
+     * users:               PubkeyCredEnity     Required
+     * pubKeyCredParams:    CBOR Array          Required
+     * excludeList          Seq of PubkeyDesc   Optional
+     * extensions           CBOR map            Optional
+     * options              Map of options      Optional
+     * pinAuth              ByteArray           Optional
+     * pinProtocol          Unsigned Int        Optional
+     */
+    CBOR data = CBOR(this->parameter, this->length, true);
+    CBOR clientDataHash;
+    CBOR rp;
+    CBOR user;
+    CBOR pubKeyCredParams;
+
+    if (data[MakeCredentialParam::KEY_CLIENT_DATA_HASH].is_bytestring()) {
+        clientDataHash = data[MakeCredentialParam::KEY_CLIENT_DATA_HASH];
+
+        uint8_t *hash = new uint8_t[clientDataHash.get_bytestring_len()];
+        clientDataHash.get_bytestring(hash);
+        for (size_t i=0; i<clientDataHash.get_bytestring_len(); ++i) {
+            Serial.printf("%.2x", hash[i]);
+        }
+        Serial.println("");
+        delete[] hash;
+    }
+
+    if (data[MakeCredentialParam::KEY_RP].is_pair()) {
+        rp = data[MakeCredentialParam::KEY_RP];
+
+        String id;
+        rp["id"].get_string(id);
+        Serial.print("rp.id:");
+        Serial.println(id);
+
+        String name;
+        rp["name"].get_string(name);
+        Serial.print("rp.name:");
+        Serial.println(name);
+    }
+
+    if (data[MakeCredentialParam::KEY_USER].is_pair()) {
+        user = data[MakeCredentialParam::KEY_USER];
+
+        uint8_t *id = new uint8_t[user["id"].get_bytestring_len()];
+        user["id"].get_bytestring(id);
+        Serial.print("user.id:");
+        for (size_t i=0; i<user["id"].get_bytestring_len(); ++i) {
+            Serial.printf("%.2x", id[i]);
+        }
+        Serial.println("");
+        delete[] id;
+
+        String name;
+        user["name"].get_string(name);
+        Serial.print("user.name:");
+        Serial.println(name);
+
+        String displayName;
+        user["displayName"].get_string(displayName);
+        Serial.print("user.displayName:");
+        Serial.println(displayName);
+    }
+
+    if (data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM].is_array()) {
+        pubKeyCredParams = data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM];
+        CBOR params = pubKeyCredParams[0];
+
+        Serial.printf("pubKeyParam[0].alg:%d\n", (int)params["alg"]);
+
+        String type;
+        params["type"].get_string(type);
+        Serial.print("pubKeyParam[0].type:");
+        Serial.println(type);
+    }
+
     throw implement_error("Not implement MakeCredential Content.");
 }
 
