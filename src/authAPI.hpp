@@ -22,6 +22,69 @@ struct AuthenticatorAPICommandParam {
 };
 
 /**
+ * @brief AuthenticatorMakeCredentialの引数であるRPの構造体
+ * @struct PublicKeyCredentialRpEntity
+ */
+struct PublicKeyCredentialRpEntity {
+    /**
+     * @brief the Relying Party Identifier
+     */
+    String id;
+
+    /**
+     * @brief a human-friendly RP name
+     */
+    String name;
+
+    /**
+     * @brief a URL referencing a RP icon image
+     */
+    String iconURL;
+};
+
+/**
+ * @brief AuthenticatorMakeCredentialの引数であるuserの構造体
+ * @struct PublicKeyCredentialUserEntity
+ */
+struct PublicKeyCredentialUserEntity {
+    /**
+     * @brief an RP-specific user account identifier
+     */
+    uint8_t *id;
+
+    /**
+     * @brief a user name
+     */
+    String name;
+
+    /**
+     * @brief a user display name
+     */
+    String displayName;
+
+    /**
+     * @brief a URL referencing a user icon image
+     */
+    String iconURL;
+};
+
+/**
+ * @brief AuthenticatorMakeCredentialの引数であるpubKeyCredParamの構造体
+ * @struct pubKeyCredParam
+ */
+struct PubKeyCredParam {
+    /**
+     * @brief cryptographic algorithm (a positive or negative integer)
+     */
+    int alg;
+
+    /**
+     * @brief PublicKeyCredentailType (a string)
+     */
+    String type;
+};
+
+/**
  *  @class AuthenticatorAPI
  *  @brief AuthenticatorAPIの各メソッドを実行するクラス
  */
