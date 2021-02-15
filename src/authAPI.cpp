@@ -27,6 +27,12 @@ const int AuthenticatorAPICommandParam::COMMAND_VENDORLAST = 0xbf;
 
 
 /* ----------------------DebugUtility---------------------- */
+/**
+ * @brief responseのデバッグ情報出力(Serial)
+ * 
+ * @param response - responseデータ
+ * @param data_len - responseDataの長さ
+ */
 void responseSerialDebug(Response response, size_t data_len) {
     Serial.printf("Response Status:%x\n", response.status);
     for (size_t i=0; i < data_len; ++i) {
@@ -34,6 +40,42 @@ void responseSerialDebug(Response response, size_t data_len) {
     }
 }
 
+/**
+ * @brief Stringのデバッグ情報出力(Serial)
+ * 
+ * @param prop - prop表記
+ * @param str - String本体
+ */
+void stringSerialDebug(String prop, String str) {
+    Serial.print(prop);
+    Serial.println(str);
+}
+
+/**
+ * @brief uint8_tのデバッグ情報出力(Serial)
+ * 
+ * @param prop - prop表記
+ * @param data - uint8_t本体
+ * @param data_len - uint8_tの長さ
+ */
+void uint8SerialDebug(String prop, uint8_t *data, size_t data_len) {
+    Serial.print(prop);
+    for (size_t i=0; i < data_len; ++i) {
+        Serial.printf("%.2x", data[i]);
+    }
+    Serial.println("");
+}
+
+/**
+ * @brief intのデバッグ情報出力(Serial)
+ * 
+ * @param prop - prop表記
+ * @param data - int本体
+ */
+void intSerialDebug(String prop, int data) {
+    Serial.print(prop);
+    Serial.println(data);
+}
 
 /* ----------------------AuthenticatorAPI---------------------- */
 /**
@@ -152,11 +194,7 @@ Response AuthenticatorAPI::authenticatorMakeCredential() {
 
         hash = new uint8_t[cbor_clientDataHash.get_bytestring_len()];
         cbor_clientDataHash.get_bytestring(hash);
-        for (size_t i=0; i<cbor_clientDataHash.get_bytestring_len(); ++i) {
-            Serial.printf("%.2x", hash[i]);
-        }
-        Serial.println("");
-        delete[] hash;
+        uint8SerialDebug("hash:", hash, cbor_clientDataHash.get_bytestring_len());
     }
 
     /* rp */
@@ -165,14 +203,11 @@ Response AuthenticatorAPI::authenticatorMakeCredential() {
         cbor_rp = data[MakeCredentialParam::KEY_RP];
 
         cbor_rp["id"].get_string(rp->id);
-        Serial.print("rp.id:");
-        Serial.println(rp->id);
+        stringSerialDebug("rp.id:", rp->id);
 
         cbor_rp["name"].get_string(rp->name);
-        Serial.print("rp.name:");
-        Serial.println(rp->name);
+        stringSerialDebug("rp.name:", rp->name);
     }
-    delete rp;
 
     /* user */
     PublicKeyCredentialUserEntity *user = new PublicKeyCredentialUserEntity;
@@ -181,40 +216,38 @@ Response AuthenticatorAPI::authenticatorMakeCredential() {
 
         user->id = new uint8_t[cbor_user["id"].get_bytestring_len()];
         cbor_user["id"].get_bytestring(user->id);
-        Serial.print("user.id:");
-        for (size_t i=0; i<cbor_user["id"].get_bytestring_len(); ++i) {
-            Serial.printf("%.2x", user->id[i]);
-        }
-        Serial.println("");
-        delete[] user->id;
+        uint8SerialDebug("user.id:", user->id, cbor_user["id"].get_bytestring_len());
 
         cbor_user["name"].get_string(user->name);
-        Serial.print("user.name:");
-        Serial.println(user->name);
+        stringSerialDebug("user.name", user->name);
 
         cbor_user["displayName"].get_string(user->displayName);
-        Serial.print("user.displayName:");
-        Serial.println(user->displayName);
+        stringSerialDebug("user.displayName:", user->displayName);
     }
-    delete user;
-
 
     /* pubKeyCredParams */
-    PubKeyCredParam *pubKeyCredParams;
+    PubKeyCredParam *pubKeyCredParams = new PubKeyCredParam;
     if (data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM].is_array()) {
         cbor_pubKeyCredParams = data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM];
         CBOR params = cbor_pubKeyCredParams[0];
 
-        pubKeyCredParams = new PubKeyCredParam[1];
         pubKeyCredParams->alg = (int)params["alg"];
-        Serial.printf("pubKeyParam[0].alg:%d\n", pubKeyCredParams->alg);
+        intSerialDebug("pubKeyParam.alg:", pubKeyCredParams->alg);
 
         params["type"].get_string(pubKeyCredParams->type);
-        Serial.print("pubKeyParam[0].type:");
-        Serial.println(pubKeyCredParams->type);
-        
-        delete[] pubKeyCredParams;
+        stringSerialDebug("pubKeyParam.type:", pubKeyCredParams->type);
     }
+
+    /* delete */
+    if (data[MakeCredentialParam::KEY_CLIENT_DATA_HASH].is_bytestring()) {
+        delete[] hash;
+    }
+    delete rp;
+    if (data[MakeCredentialParam::KEY_USER].is_pair()) {
+        delete[] user->id;
+    }
+    delete user;
+    delete pubKeyCredParams;
 
     throw implement_error("Not implement MakeCredential Content.");
 }
