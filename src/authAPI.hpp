@@ -84,6 +84,53 @@ struct PubKeyCredParam {
     String type;
 };
 
+struct ParsedMakeCredentialParams {
+    /**
+     * @brief clientDataHash - ByteArray
+     */
+    uint8_t *hash;
+
+    /**
+     * @brief rp - PublicKeyCredentialRpEntity 
+     */
+    PublicKeyCredentialRpEntity *rp;
+
+    /**
+     * @brief user - PublicKeyCredentialUserEntity
+     */
+    PublicKeyCredentialUserEntity *user;
+
+    /**
+     * @brief pubKeyCredParams - PubKeyCredParams;
+     */
+    PubKeyCredParam *pubKeyCredParams;
+
+    /**
+     * @brief request data of CBOR - CBOR
+     */
+    CBOR data;
+
+    /**
+     * @brief clientDataHash of CBOR - CBOR
+     */
+    CBOR cbor_clientDataHash;
+
+    /**
+     * @brief rp of CBOR - CBOR
+     */
+    CBOR cbor_rp;
+
+    /**
+     * @brief user of CBOR - CBOR
+     */
+    CBOR cbor_user;
+
+    /**
+     * @brief pubKeyCredParams of CBOR - CBOR
+     */
+    CBOR cbor_pubKeyCredParams;
+};
+
 /**
  *  @class AuthenticatorAPI
  *  @brief AuthenticatorAPIの各メソッドを実行するクラス
@@ -114,7 +161,7 @@ class AuthenticatorAPI {
         AuthenticatorAPI(unsigned int command, uint8_t *parameter, unsigned int length);
         ~AuthenticatorAPI() {};
         Response operateCommand();
-        Response authenticatorMakeCredential();
+        Response authenticatorMakeCredential(ParsedMakeCredentialParams *params);
         Response authenticatorGetAssertion();
         Response authenticatorGetInfo();
         Response authenticatorClientPIN();

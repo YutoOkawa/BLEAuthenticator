@@ -118,33 +118,103 @@ AuthenticatorAPI::AuthenticatorAPI(unsigned int command, uint8_t *parameter, uns
  * @return Response - AuthenticatorAPIの返り値
  */
 Response AuthenticatorAPI::operateCommand() {
-    switch(this->command) { /* Commandに応じた関数を呼び出す */
-        case AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL:
-            return this->authenticatorMakeCredential(); break;
+    /* TODO:deleteをうまくするためにこの関数内部でCBORパースして関数に渡す */
+    Response response;
 
-        case AuthenticatorAPICommandParam::COMMAND_GETASSERTION:
-            return this->authenticatorGetAssertion(); break;
+    if (this->command == AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL) {
+        /**
+         * MemberName           Data type           Required?
+         * -------------        ----------          ----------
+         * clientDataHash:      Byte Array          Required
+         * rp:                  PubkeyCredEntity    Required 
+         * users:               PubkeyCredEnity     Required
+         * pubKeyCredParams:    CBOR Array          Required
+         * excludeList          Seq of PubkeyDesc   Optional
+         * extensions           CBOR map            Optional
+         * options              Map of options      Optional
+         * pinAuth              ByteArray           Optional
+         * pinProtocol          Unsigned Int        Optional
+         */
+        ParsedMakeCredentialParams *params = new ParsedMakeCredentialParams;
 
-        case AuthenticatorAPICommandParam::COMMAND_GETINFO:
-            return this->authenticatorGetInfo(); break;
+        params->data = CBOR(this->parameter, this->length, true);
 
-        case AuthenticatorAPICommandParam::COMMAND_CLIENTPIN:
-            return this->authenticatorClientPIN(); break;
+        /* clientDataHash */
+        if (params->data[MakeCredentialParam::KEY_CLIENT_DATA_HASH].is_bytestring()) {
+            params->cbor_clientDataHash = params->data[MakeCredentialParam::KEY_CLIENT_DATA_HASH];
+            params->hash = new uint8_t[params->cbor_clientDataHash.get_bytestring_len()];
+            params->cbor_clientDataHash.get_bytestring(params->hash);
 
-        case AuthenticatorAPICommandParam::COMMAND_RESET:
-            return this->authenticatorReset(); break;
+            uint8SerialDebug("hash:", params->hash, params->cbor_clientDataHash.get_bytestring_len());
+        }
 
-        case AuthenticatorAPICommandParam::COMMAND_GETNEXTASSERTION:
-            return this->authenticatorGetNextAssertion(); break;
+        /* rp  */
+        params->rp = new PublicKeyCredentialRpEntity;
+        if (params->data[MakeCredentialParam::KEY_RP].is_pair()) {
+            params->cbor_rp = params->data[MakeCredentialParam::KEY_RP];
+            params->cbor_rp["id"].get_string(params->rp->id);
+            params->cbor_rp["name"].get_string(params->rp->name);
 
-        case AuthenticatorAPICommandParam::COMMAND_VENDORFIRST:
-            return this->authenticatorVendorFirst(); break;
+            stringSerialDebug("rp.id:", params->rp->id);
+            stringSerialDebug("rp.name:", params->rp->name);
+        }
 
-        case AuthenticatorAPICommandParam::COMMAND_VENDORLAST:
-            return this->authenciatorVendorLast(); break;
-            
-        default: /* Commandが存在しない場合 */
-            throw implement_error("This command isn't implemented."); break;
+        /* user */
+        params->user = new PublicKeyCredentialUserEntity;
+        if (params->data[MakeCredentialParam::KEY_USER].is_pair()) {
+            params->cbor_user = params->data[MakeCredentialParam::KEY_USER];
+            params->user->id = new uint8_t[params->cbor_user["id"].get_bytestring_len()];
+            params->cbor_user["id"].get_bytestring(params->user->id);
+            params->cbor_user["name"].get_string(params->user->name);
+            params->cbor_user["displayName"].get_string(params->user->displayName);
+
+            uint8SerialDebug("user.id:", params->user->id, params->cbor_user["id"].get_bytestring_len());
+            stringSerialDebug("user.name:", params->user->name);
+            stringSerialDebug("user.displayName:", params->user->displayName);
+        }
+
+        /* pubKeyCredParams */
+        /* TODO:pubKeyCredParamsのサイズの可変長化(2つ以上引数として求められる場合がある) */
+        params->pubKeyCredParams = new PubKeyCredParam;
+        if (params->data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM].is_array()) {
+            params->cbor_pubKeyCredParams = params->data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM];
+            CBOR pubKeyCredParam = params->cbor_pubKeyCredParams[0];
+            params->pubKeyCredParams->alg = (int)pubKeyCredParam["alg"];
+            pubKeyCredParam["type"].get_string(params->pubKeyCredParams->type);
+
+            intSerialDebug("pubKeyCredParam.alg:", params->pubKeyCredParams->alg);
+            stringSerialDebug("pubKeyCredParams.type:", params->pubKeyCredParams->type);
+        }
+
+        /* API呼び出し */
+        response = this->authenticatorMakeCredential(params);
+
+        /* delete */
+        delete params->hash;
+        delete params->rp;
+        delete params->user->id;
+        delete params->user;
+        delete params->pubKeyCredParams;
+        delete params;
+
+        return response;
+
+    } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETASSERTION) {
+        return this->authenticatorGetAssertion();
+    } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETINFO) {
+        return this->authenticatorGetInfo();
+    } else if (this->command == AuthenticatorAPICommandParam::COMMAND_CLIENTPIN) {
+        return this->authenticatorClientPIN();
+    } else if (this->command == AuthenticatorAPICommandParam::COMMAND_RESET) {
+        return this->authenticatorReset();
+    } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETNEXTASSERTION) {
+        return this->authenticatorGetNextAssertion();
+    } else if (this->command == AuthenticatorAPICommandParam::COMMAND_VENDORFIRST) {
+        return this->authenticatorVendorFirst();
+    } else if (this->command == AuthenticatorAPICommandParam::COMMAND_VENDORLAST) {
+        return this->authenciatorVendorLast();
+    } else { /* Commandが存在しない場合 */
+        throw implement_error("This command isn't implemented.");
     }
 }
 
@@ -153,7 +223,7 @@ Response AuthenticatorAPI::operateCommand() {
  * 
  * @return Response - authenticatorMakeCredentialに対応した返り値
  */
-Response AuthenticatorAPI::authenticatorMakeCredential() {
+Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParams *params) {
     /**
      * authenticatorMakeCredential Response
      */
@@ -168,86 +238,39 @@ Response AuthenticatorAPI::authenticatorMakeCredential() {
      */
     CBORPair response_data;
 
-    /**
-     * MemberName           Data type           Required?
-     * -------------        ----------          ----------
-     * clientDataHash:      Byte Array          Required
-     * rp:                  PubkeyCredEntity    Required 
-     * users:               PubkeyCredEnity     Required
-     * pubKeyCredParams:    CBOR Array          Required
-     * excludeList          Seq of PubkeyDesc   Optional
-     * extensions           CBOR map            Optional
-     * options              Map of options      Optional
-     * pinAuth              ByteArray           Optional
-     * pinProtocol          Unsigned Int        Optional
-     */
-    CBOR data = CBOR(this->parameter, this->length, true);
-    CBOR cbor_clientDataHash;
-    CBOR cbor_rp;
-    CBOR cbor_user;
-    CBOR cbor_pubKeyCredParams;
+    /* 1.excludeListにパラメータが存在し、認証器内部のデータと一致した場合はエラー */
 
-    /* clientDataHash */
-    uint8_t *hash;
-    if (data[MakeCredentialParam::KEY_CLIENT_DATA_HASH].is_bytestring()) {
-        cbor_clientDataHash = data[MakeCredentialParam::KEY_CLIENT_DATA_HASH];
-
-        hash = new uint8_t[cbor_clientDataHash.get_bytestring_len()];
-        cbor_clientDataHash.get_bytestring(hash);
-        uint8SerialDebug("hash:", hash, cbor_clientDataHash.get_bytestring_len());
+    /* 2.pubKeyCredParamsにサポートしないCOSEのvalueがあればエラー */
+    if (params->data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM].is_array()) {
+        /* TODO:サポートするアルゴリズムの定数化 */
+        switch (params->pubKeyCredParams->alg) {
+            case -7:
+                Serial.printf("Algorithm %d is Supported by this authenticator.\n", params->pubKeyCredParams->alg);
+                break;
+            default: /* 該当しないalgであればエラーを返す */
+                Serial.println("This Algorithm is not Supported by this authenticator.");
+                response.status = StatusCodeParam::CTAP2_ERR_UNSUPPORTED_ALGORITHM;
+                return response;
+        }
     }
 
-    /* rp */
-    PublicKeyCredentialRpEntity *rp = new PublicKeyCredentialRpEntity;
-    if (data[MakeCredentialParam::KEY_RP].is_pair()) {
-        cbor_rp = data[MakeCredentialParam::KEY_RP];
+    /* 3.optionのチェック */
 
-        cbor_rp["id"].get_string(rp->id);
-        stringSerialDebug("rp.id:", rp->id);
+    /* 4.extensionsのチェック */
 
-        cbor_rp["name"].get_string(rp->name);
-        stringSerialDebug("rp.name:", rp->name);
-    }
+    /* 5.pinAuthパラメータのチェック */
 
-    /* user */
-    PublicKeyCredentialUserEntity *user = new PublicKeyCredentialUserEntity;
-    if (data[MakeCredentialParam::KEY_USER].is_pair()) {
-        cbor_user = data[MakeCredentialParam::KEY_USER];
+    /* 6.pinAuthがなくclientPinがセットされていればエラー */
 
-        user->id = new uint8_t[cbor_user["id"].get_bytestring_len()];
-        cbor_user["id"].get_bytestring(user->id);
-        uint8SerialDebug("user.id:", user->id, cbor_user["id"].get_bytestring_len());
+    /* 7.pinAuthがありpinProtocolがサポートされていなければエラー */
 
-        cbor_user["name"].get_string(user->name);
-        stringSerialDebug("user.name", user->name);
+    /* 8.ユーザのローカル認証を要求 */
 
-        cbor_user["displayName"].get_string(user->displayName);
-        stringSerialDebug("user.displayName:", user->displayName);
-    }
+    /* 9.アルゴリズムにしたがって鍵ペアを生成する */
 
-    /* pubKeyCredParams */
-    PubKeyCredParam *pubKeyCredParams = new PubKeyCredParam;
-    if (data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM].is_array()) {
-        cbor_pubKeyCredParams = data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM];
-        CBOR params = cbor_pubKeyCredParams[0];
+    /* 10.optionsにrkが設定されている場合の処理 */
 
-        pubKeyCredParams->alg = (int)params["alg"];
-        intSerialDebug("pubKeyParam.alg:", pubKeyCredParams->alg);
-
-        params["type"].get_string(pubKeyCredParams->type);
-        stringSerialDebug("pubKeyParam.type:", pubKeyCredParams->type);
-    }
-
-    /* delete */
-    if (data[MakeCredentialParam::KEY_CLIENT_DATA_HASH].is_bytestring()) {
-        delete[] hash;
-    }
-    delete rp;
-    if (data[MakeCredentialParam::KEY_USER].is_pair()) {
-        delete[] user->id;
-    }
-    delete user;
-    delete pubKeyCredParams;
+    /* 11.clientDataHashを使ってAttestation Statementを生成する */
 
     throw implement_error("Not implement MakeCredential Content.");
 }
