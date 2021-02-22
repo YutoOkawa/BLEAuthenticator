@@ -187,7 +187,7 @@ void ConnectServerCallbacks::setConnect(bool connect) {
 /* ----------------------ControlPointCallbacks---------------------- */
 void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     Request request;
-    Response response;
+    // Response response;
 
     data = characteristic->getData();
     request = parseRequest(data);
@@ -197,11 +197,22 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
         Serial.println(e.what());
     }
 
+    Serial.println("");
+    for (size_t i=0; i < response.length; ++i) {
+        Serial.printf("%.2x", response.responseData[i]);
+    }
+    Serial.println("");
+
     // TODO:CBORデータの作成
     // uint8_t化とそのデータサイズの補完
-    responseData = new uint8_t[response.length];
-    memcpy(responseData, response.responseData, response.length);
-    responseDataLength = response.length;
+    // responseData = new uint8_t[response.length];
+    // memcpy(responseData, response.responseData, response.length);
+    // responseDataLength = response.length;
+
+    // for (size_t i=0; i < response.length; ++i) {
+        // Serial.printf("%.2x", responseData[i]);
+    // }
+    // Serial.println("");
 
     // 書き込みが終わればフラグを立てる
     this->writeFlag = true;
@@ -343,11 +354,11 @@ Response ControlPointCallbacks::parseErrorCommand(Request request) {
 }
 
 uint8_t *ControlPointCallbacks::getResponseData() {
-    return this->responseData;
+    return (uint8_t*)this->response.responseData;
 }
 
 size_t ControlPointCallbacks::getResponseDataLength() {
-    return this->responseDataLength;
+    return this->response.length;
 }
 
 bool ControlPointCallbacks::getFlag() {
