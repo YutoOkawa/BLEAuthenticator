@@ -27,6 +27,9 @@ const int CommandConstParam::COMMAND_CANCEL = 0xbe;
 const int CommandConstParam::COMMAND_ERROR = 0xbf;
 
 /* ----------------------CTAPBLE---------------------- */
+/**
+ * @brief BLE initialize function.
+ */
 void CTAPBLE::init() {
     // Create the BLE Device
     BLEDevice::init("FIDO ABS Authenticator");
@@ -35,6 +38,9 @@ void CTAPBLE::init() {
     this->status = new StatusCallbacks();
 }
 
+/**
+ * @brief BLE start service function.
+ */
 void CTAPBLE::startService() {
     // Create the BLE Server
     pServer = BLEDevice::createServer();
@@ -81,6 +87,9 @@ void CTAPBLE::startService() {
 
 }
 
+/**
+ * @brief BLE start advertising.
+ */
 void CTAPBLE::startAdvertise() {
     // Start Adveritising
     pAdvertising = BLEDevice::getAdvertising();
@@ -167,11 +176,21 @@ StatusCallbacks *CTAPBLE::getStatus() {
 }
 
 /* ----------------------ConnectServerCallbacks---------------------- */
+/**
+ * @brief connectしたときに発火
+ * 
+ * @param pServer - connected server.
+ */
 void ConnectServerCallbacks::onConnect(BLEServer *pServer) {
     this->connect = true;
     BLEDevice::startAdvertising();
 }
 
+/**
+ * @brief 接続解除したときに発火
+ * 
+ * @param pServer - disconnected server.
+ */
 void ConnectServerCallbacks::onDisconnect(BLEServer *pServer) {
     this->connect = false;
 }
@@ -185,9 +204,13 @@ void ConnectServerCallbacks::setConnect(bool connect) {
 }
 
 /* ----------------------ControlPointCallbacks---------------------- */
+/**
+ * @brief characteristicに書き込まれたときに発火
+ * 
+ * @param characteristic - 書き込まれたcharacteristic
+ */
 void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     Request request;
-    // Response response;
 
     data = characteristic->getData();
     request = parseRequest(data);
@@ -202,17 +225,6 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
         Serial.printf("%.2x", response.responseData[i]);
     }
     Serial.println("");
-
-    // TODO:CBORデータの作成
-    // uint8_t化とそのデータサイズの補完
-    // responseData = new uint8_t[response.length];
-    // memcpy(responseData, response.responseData, response.length);
-    // responseDataLength = response.length;
-
-    // for (size_t i=0; i < response.length; ++i) {
-        // Serial.printf("%.2x", responseData[i]);
-    // }
-    // Serial.println("");
 
     // 書き込みが終わればフラグを立てる
     this->writeFlag = true;
@@ -370,6 +382,11 @@ void ControlPointCallbacks::setFlag(bool flag) {
 }
 
 /* ----------------------StatusCallbacks---------------------- */
+/**
+ * @brief notifyを送信したときに発火する
+ * 
+ * @param characteristic - Notifyしたcharacteristic
+ */
 void StatusCallbacks::onNotify(BLECharacteristic *characteristic) {
     Serial.println("NOTIFY!");
 }

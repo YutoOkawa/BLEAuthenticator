@@ -114,11 +114,11 @@ AuthenticatorAPI::AuthenticatorAPI(unsigned int command, uint8_t *parameter, uns
 
 /**
  * @brief Commandに対応したAuthenticatorAPIを実行する
+ *        Requestをパースしたのち各APIの機能を呼び出す
  * 
  * @return Response - AuthenticatorAPIの返り値
  */
 Response AuthenticatorAPI::operateCommand() {
-    /* TODO:deleteをうまくするためにこの関数内部でCBORパースして関数に渡す */
     Response response;
 
     if (this->command == AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL) {

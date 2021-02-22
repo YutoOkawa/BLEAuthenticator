@@ -46,8 +46,6 @@ class ControlPointCallbacks: public BLECharacteristicCallbacks {
         uint8_t* data;
         bool writeFlag = false;
         Response response;
-        // size_t responseDataLength;
-        // uint8_t *responseData;
 
     public:
         void onWrite(BLECharacteristic *characteristic);
