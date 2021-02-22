@@ -3,6 +3,8 @@
 
 CTAPBLE Device;
 
+void notify();
+
 void setup() {
     // put your setup code here, to run once:
     M5.begin();
@@ -16,5 +18,20 @@ void setup() {
 
 void loop() {
     // put your main code here, to run repeatedly:
-    delay(200);
+    if (Device.getConnectServer()->getConnect()) {
+        notify();
+    } else {
+        Serial.println("Device is not connected.");
+    }
+    delay(2000);
+}
+
+/* 接続されれば起動 */
+/* ControlPointで値の処理が終了すればフラグが立ち上がり、Statusに値をセットしてNotifyを行う */
+void notify() {
+    if (Device.getControlPoint()->getFlag()) {
+        Device.getStatusCharacteristic()->setValue(Device.getControlPoint()->getResponseData(), Device.getControlPoint()->getResponseDataLength());
+        Device.getStatusCharacteristic()->notify();
+        Device.getControlPoint()->setFlag(false);
+    }
 }

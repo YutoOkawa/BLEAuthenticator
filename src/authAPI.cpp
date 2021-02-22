@@ -378,6 +378,8 @@ Response AuthenticatorAPI::authenticatorGetInfo() {
     response.responseData = response_data.to_CBOR();
     responseSerialDebug(response, response_data.length());
 
+    response.length = response_data.length();
+
     return response;
 
     // throw implement_error("Not implement GetInfo Content.");

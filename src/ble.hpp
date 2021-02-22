@@ -2,8 +2,8 @@
 #define INCLUDED_ble_h_
 
 #include <BLEDevice.h>
-#include <BLEDevice.h>
 #include <BLEUtils.h>
+#include <BLE2902.h>
 #include "ctap.hpp"
 
 struct ServiceConstParam {
@@ -17,6 +17,58 @@ struct CharacteristicConstParam {
     static const char CHARACTERISTIC_SERVICEREVISIONBITFIELD_UUID[37];
     static const char CHARACTERISTIC_SERVICEREVISION_UUID[37];
 };
+
+/**
+ * @struct CommandConstParam
+ * @brief  CTAP(BLE)のCommand形式 Request/Responseの先頭1byte
+ */ 
+struct CommandConstParam {
+    static const int COMMAND_PING;
+    static const int COMMAND_KEEPALIVE;
+    static const int COMMAND_MSG;
+    static const int COMMAND_CANCEL;
+    static const int COMMAND_ERROR;
+};
+
+class ConnectServerCallbacks : public BLEServerCallbacks {
+    private:
+        bool connect = false;
+    public:
+        void onConnect(BLEServer *pServer);
+        void onDisconnect(BLEServer *pServer);
+
+        bool getConnect();
+        void setConnect(bool connect);
+};
+
+class ControlPointCallbacks: public BLECharacteristicCallbacks {
+    private:
+        uint8_t* data;
+        bool writeFlag = false;
+        uint8_t *responseData;
+        size_t responseDataLength;
+
+    public:
+        void onWrite(BLECharacteristic *characteristic);
+        Request parseRequest(uint8_t *req);
+        Response operateCTAPCommand(Request request);
+        Response parsePingCommand(Request request);
+        Response parseKeepAliveCommand(Request request);
+        Response parseMsgCommand(Request request);
+        Response parseCancelCommand(Request request);
+        Response parseErrorCommand(Request request);
+
+        bool getFlag();
+        uint8_t *getResponseData();
+        size_t getResponseDataLength();
+        void setFlag(bool flag);
+};
+
+class StatusCallbacks: public BLECharacteristicCallbacks {
+    public:
+        void onNotify(BLECharacteristic *characteristic);
+};
+
 
 class CTAPBLE {
     private:
@@ -58,6 +110,11 @@ class CTAPBLE {
         */
         BLECharacteristic *pSrbCharacteristic;
         BLEAdvertising *pAdvertising;
+
+        ConnectServerCallbacks *connectServer;
+        ControlPointCallbacks *controlPoint;
+        StatusCallbacks *status;
+        
     public:
         void init();
         void startService();
@@ -80,6 +137,9 @@ class CTAPBLE {
         BLECharacteristic *getSrbBitCharacteritsic();
         BLECharacteristic *getSrbCharacteritsic();
         BLEAdvertising *getAdvertising();
+        ConnectServerCallbacks *getConnectServer();
+        ControlPointCallbacks *getControlPoint();
+        StatusCallbacks *getStatus();
 };
 
 #endif
