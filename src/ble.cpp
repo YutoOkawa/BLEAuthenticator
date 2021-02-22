@@ -240,10 +240,7 @@ Request ControlPointCallbacks::parseRequest(uint8_t *req) {
     req++;
     // Command Parameterを取得
     request.data.commandParameter = new uint8_t[request.llen-1];
-    for (int i=request.hlen; i<request.llen-1; i++) {
-        request.data.commandParameter[i] = (uint8_t)*req;
-        req++;
-    }
+    memcpy(request.data.commandParameter, req, request.llen-1);
 
     return request;
 }
