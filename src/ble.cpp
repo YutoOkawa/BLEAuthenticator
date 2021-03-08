@@ -27,6 +27,12 @@ const int CommandConstParam::COMMAND_CANCEL = 0xbe;
 const int CommandConstParam::COMMAND_ERROR = 0xbf;
 
 /* ----------------------CTAPBLE---------------------- */
+CTAPBLE::~CTAPBLE() {
+    delete this->connectServer;
+    delete this->controlPoint;
+    delete this->status;
+}
+
 /**
  * @brief BLE initialize function.
  */
@@ -204,18 +210,23 @@ void ConnectServerCallbacks::setConnect(bool connect) {
 }
 
 /* ----------------------ControlPointCallbacks---------------------- */
+ControlPointCallbacks::~ControlPointCallbacks() {
+    delete authAPI;
+}
+
 /**
  * @brief characteristicに書き込まれたときに発火
  * 
  * @param characteristic - 書き込まれたcharacteristic
  */
 void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
-    Request request;
+    // Request req;
+    // Response res;
 
-    data = characteristic->getData();
-    request = parseRequest(data);
+    this->data = characteristic->getData();
+    this->request = parseRequest();
     try {
-        response = operateCTAPCommand(request);
+        this->response = operateCTAPCommand(this->request);
     } catch (implement_error e) { /* 未実装コマンドだった場合 */
         Serial.println(e.what());
     }
@@ -228,7 +239,13 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
 
     // 書き込みが終わればフラグを立てる
     this->writeFlag = true;
+
+    // TODO:Request, Response, authAPIのメモリ解放
+    // Callbackの内部で保持しているため、デストラクタの呼び出しでdeleteするのが難しい
+    // onWriteが終わったタイミングでデストラクタが呼び出されてそれぞれが解放されるのがベスト
+    // この3つをまとめた構造体を作ってデストラクタで解放するか
     delete[] request.data.commandParameter;
+    Serial.println("on Write End.");
 }
 
 // TODO: パース関数のエラー処理
@@ -238,130 +255,121 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
  * @param req - characteristicに書き込まれたdata
  * @return Request - CTAPに沿ったRequest形式
  */
-Request ControlPointCallbacks::parseRequest(uint8_t *req) {
-    Request request;
-
+Request ControlPointCallbacks::parseRequest() {
     // TODO: commandがなかった場合のエラー処理
     // Commandを取得
-    request.command = (unsigned int)*req;
-    req++;
+    this->request.command = (unsigned int)*this->data;
+    this->data++;
 
     // TODO: HLENがなかった場合のエラー処理
     // HLENを取得
-    request.hlen = (unsigned int)*req;
-    req++;
+    this->request.hlen = (unsigned int)*this->data;
+    this->data++;
 
     // TODO: LLENがなかった場合のエラー処理
     // LLENを取得
-    request.llen = (unsigned int)*req;
-    req++;
+    this->request.llen = (unsigned int)*this->data;
+    this->data++;
 
     // TODO: Dataがなかった場合のエラー処理
     // Dataを取得
     // Command Valueを取得
-    request.data.commandValue = (unsigned int)*req;
-    req++;
+    this->request.data.commandValue = (unsigned int)*this->data;
+    this->data++;
     // Command Parameterを取得
-    request.data.commandParameter = new uint8_t[request.llen-1];
-    memcpy(request.data.commandParameter, req, request.llen-1);
+    this->request.data.commandParameter = new uint8_t[this->request.llen-1];
+    memcpy(this->request.data.commandParameter, this->data, this->request.llen-1);
 
-    return request;
+    Serial.println("parseRequest End.");
+    return this->request;
 }
 
 /**
  * @brief CTAPのコマンドに対応した関数を呼び出す 
  * 
- * @param request - CTAPに沿ったRequest形式
  * @return Response - CTAPに沿ったResponse形式
  */
 Response ControlPointCallbacks::operateCTAPCommand(Request request) {
-    Response response;
-    
     switch (request.command) { /* Commandに応じた関数を呼び出す */
         case CommandConstParam::COMMAND_PING:
-            response = parsePingCommand(request); break;
+            this->response = parsePingCommand(); break;
 
         case CommandConstParam::COMMAND_KEEPALIVE:
-            response = parseKeepAliveCommand(request); break;
+            this->response = parseKeepAliveCommand(); break;
 
         case CommandConstParam::COMMAND_MSG:
-            response = parseMsgCommand(request); break;
+            this->response = parseMsgCommand(); break;
 
         case CommandConstParam::COMMAND_CANCEL:
-            response = parseCancelCommand(request); break;
+            this->response = parseCancelCommand(); break;
 
         case CommandConstParam::COMMAND_ERROR:
-            response = parseErrorCommand(request); break;
+            this->response = parseErrorCommand(); break;
 
         default: /* Commandが存在しない場合 */
             throw implement_error("Not implement CTAP Command."); break;
     }
 
-    return response;
+    Serial.println("OperateCommand End.");
+    return this->response;
 }
 
 /**
  * @brief PINGコマンドの処理
  * 
- * @param request - CTAPに沿ったRequest形式
  * @return Response - PINGコマンドの返り値
  */
-Response ControlPointCallbacks::parsePingCommand(Request request) {
+Response ControlPointCallbacks::parsePingCommand() {
     throw implement_error("Not implement PING Command.");
 }
 
 /**
  * @brief KEEPALIVEのコマンド処理
  * 
- * @param request - CTAPに沿ったRequest形式
  * @return Response - KEEPALIVEコマンドの返り値
  */
-Response ControlPointCallbacks::parseKeepAliveCommand(Request request) {
+Response ControlPointCallbacks::parseKeepAliveCommand() {
     throw implement_error("Not implement KEEPALIVE Command.");
 }
 
 /**
  * @brief MSGコマンドの処理
  * 
- * @param request - CTAPに沿ったRequest形式
  * @return Response - MSGコマンドの返り値 
  */
-Response ControlPointCallbacks::parseMsgCommand(Request request) {
-    AuthenticatorAPI *authAPI;
-    Response response;
-
-    if (checkHasParameters(request.data.commandValue)) { /* パラメータを必要とするもの */
-        authAPI = new AuthenticatorAPI(request.data.commandValue, request.data.commandParameter, request.llen - request.hlen - 1);
+Response ControlPointCallbacks::parseMsgCommand() {
+    if (checkHasParameters(this->request.data.commandValue)) { /* パラメータを必要とするもの */
+        this->authAPI = new AuthenticatorAPI(this->request.data.commandValue, this->request.data.commandParameter, this->request.llen - this->request.hlen - 1);
     } else { /* パラメータを必要としなもの */
-        authAPI = new AuthenticatorAPI(request.data.commandValue);
+        this->authAPI = new AuthenticatorAPI(this->request.data.commandValue);
     }
 
     try {
-        response = authAPI->operateCommand();
+        this->response = this->authAPI->operateCommand();
     } catch (implement_error e) { /* 未実装コマンドだった場合 */
         throw implement_error(e.what());
     }
 
-    return response;
+    Serial.println("parseMsgCommand End.");
+
+    return this->response;
 }
 
 /**
  * @brief CANCELコマンドの処理
  * 
- * @param request - CTAPに沿ったRequest形式
  * @return Response - CANCELコマンドの返り値
  */
-Response ControlPointCallbacks::parseCancelCommand(Request request) {
+Response ControlPointCallbacks::parseCancelCommand() {
     throw implement_error("Not implement CANCEL Command.");
 }
 
 /**
  * @brief ERRORコマンドの処理
  * 
- * @param request - CTAPに沿ったRequest形式
  * @return Response - ERRORコマンドの返り値
  */
-Response ControlPointCallbacks::parseErrorCommand(Request request) {
+Response ControlPointCallbacks::parseErrorCommand() {
     throw implement_error("Not implement ERROR Command.");
 }
 

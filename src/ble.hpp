@@ -45,17 +45,20 @@ class ControlPointCallbacks: public BLECharacteristicCallbacks {
     private:
         uint8_t* data;
         bool writeFlag = false;
+        Request request;
+        AuthenticatorAPI *authAPI;
         Response response;
 
     public:
+        ~ControlPointCallbacks();
         void onWrite(BLECharacteristic *characteristic);
-        Request parseRequest(uint8_t *req);
+        Request parseRequest();
         Response operateCTAPCommand(Request request);
-        Response parsePingCommand(Request request);
-        Response parseKeepAliveCommand(Request request);
-        Response parseMsgCommand(Request request);
-        Response parseCancelCommand(Request request);
-        Response parseErrorCommand(Request request);
+        Response parsePingCommand();
+        Response parseKeepAliveCommand();
+        Response parseMsgCommand();
+        Response parseCancelCommand();
+        Response parseErrorCommand();
 
         bool getFlag();
         uint8_t *getResponseData();
@@ -115,6 +118,7 @@ class CTAPBLE {
         StatusCallbacks *status;
         
     public:
+        ~CTAPBLE();
         void init();
         void startService();
         void startAdvertise();

@@ -62,6 +62,8 @@ struct Request {
      *        Length:s (s is equal to the length)
      */
     Command data;
+
+    ~Request();
 };
 
 #endif

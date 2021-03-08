@@ -1,5 +1,17 @@
 #include "message.hpp"
 
+/* ----------------------Command---------------------- */
+Command::~Command() {
+    Serial.println("Command destroy");
+    // delete[] commandParameter;
+}
+
+/* ----------------------Response---------------------- */
+Response::~Response() {
+    Serial.println("Response destroy");
+    // delete[] responseData;
+}
+
 /* ----------------------StatusCodeParam---------------------- */
 /** @brief Indicates successful response. (0x00) */
 const int StatusCodeParam::CTAP1_ERR_SUCCESS = 0x00;

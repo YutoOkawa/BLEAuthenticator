@@ -2,6 +2,7 @@
 #define INCLUDED_message_h_
 
 #include <stdint.h>
+#include <M5StickC.h>
 
 /**
  * @struct Command
@@ -10,6 +11,7 @@
 struct Command {
     unsigned int commandValue = 0x00;
     uint8_t *commandParameter;
+    ~Command();
 };
 
 /**
@@ -20,6 +22,7 @@ struct Response {
     unsigned int status = 0x00;
     const uint8_t *responseData;
     unsigned int length = 0;
+    ~Response();
 };
 
 /**

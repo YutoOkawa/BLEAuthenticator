@@ -66,6 +66,11 @@ struct PublicKeyCredentialUserEntity {
      * @brief a URL referencing a user icon image
      */
     String iconURL;
+
+    /**
+     * @brief Destroy the Public Key Credential User Entity object
+     */
+    ~PublicKeyCredentialUserEntity();
 };
 
 /**
@@ -129,6 +134,11 @@ struct ParsedMakeCredentialParams {
      * @brief pubKeyCredParams of CBOR - CBOR
      */
     CBOR cbor_pubKeyCredParams;
+
+    /**
+     * @brief Destroy the Parsed Make Credential Params object
+     */
+    ~ParsedMakeCredentialParams();
 };
 
 /**
@@ -159,7 +169,7 @@ class AuthenticatorAPI {
         AuthenticatorAPI();
         AuthenticatorAPI(unsigned int command);
         AuthenticatorAPI(unsigned int command, uint8_t *parameter, unsigned int length);
-        ~AuthenticatorAPI() {};
+        ~AuthenticatorAPI();
         Response operateCommand();
         Response authenticatorMakeCredential(ParsedMakeCredentialParams *params);
         Response authenticatorGetAssertion();

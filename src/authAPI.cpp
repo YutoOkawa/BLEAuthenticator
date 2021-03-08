@@ -26,6 +26,22 @@ const int AuthenticatorAPICommandParam::COMMAND_VENDORFIRST = 0x40;
 const int AuthenticatorAPICommandParam::COMMAND_VENDORLAST = 0xbf;
 
 
+/* ----------------------PublicKeyCredentialUserEntity---------------------- */
+PublicKeyCredentialUserEntity::~PublicKeyCredentialUserEntity() {
+    Serial.println("delete PublicKeyCredentialUserEntity");
+    delete[] this->id;
+}
+
+/* ----------------------ParsedMakeCredentialParams---------------------- */
+ParsedMakeCredentialParams::~ParsedMakeCredentialParams() {
+    Serial.println("delete ParsedMakeCredentialParams");
+    delete[] this->hash;
+    delete this->rp;
+    delete this->user;
+    delete this->pubKeyCredParams;
+}
+
+
 /* ----------------------DebugUtility---------------------- */
 /**
  * @brief responseのデバッグ情報出力(Serial)
@@ -38,6 +54,7 @@ void responseSerialDebug(Response response, size_t data_len) {
     for (size_t i=0; i < data_len; ++i) {
         Serial.printf("%.2x", response.responseData[i]);
     }
+    Serial.println("Serial Debug");
 }
 
 /**
@@ -112,6 +129,10 @@ AuthenticatorAPI::AuthenticatorAPI(unsigned int command, uint8_t *parameter, uns
     this->length = length;
 }
 
+AuthenticatorAPI::~AuthenticatorAPI() {
+    Serial.println("authAPI destroy");
+}
+
 /**
  * @brief Commandに対応したAuthenticatorAPIを実行する
  *        Requestをパースしたのち各APIの機能を呼び出す
@@ -135,6 +156,8 @@ Response AuthenticatorAPI::operateCommand() {
          * pinAuth              ByteArray           Optional
          * pinProtocol          Unsigned Int        Optional
          */
+
+        Serial.println("Make Credential.");
         ParsedMakeCredentialParams *params = new ParsedMakeCredentialParams;
 
         params->data = CBOR(this->parameter, this->length, true);
@@ -189,19 +212,13 @@ Response AuthenticatorAPI::operateCommand() {
         /* API呼び出し */
         response = this->authenticatorMakeCredential(params);
 
-        /* delete */
-        delete params->hash;
-        delete params->rp;
-        delete params->user->id;
-        delete params->user;
-        delete params->pubKeyCredParams;
-        delete params;
 
         return response;
 
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETASSERTION) {
         return this->authenticatorGetAssertion();
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETINFO) {
+        Serial.println("Get Ifo");
         return this->authenticatorGetInfo();
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_CLIENTPIN) {
         return this->authenticatorClientPIN();
@@ -271,6 +288,9 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     /* 10.optionsにrkが設定されている場合の処理 */
 
     /* 11.clientDataHashを使ってAttestation Statementを生成する */
+
+    Serial.println("MakeCredential command end.");
+    delete params;
 
     throw implement_error("Not implement MakeCredential Content.");
 }
@@ -379,6 +399,8 @@ Response AuthenticatorAPI::authenticatorGetInfo() {
     responseSerialDebug(response, response_data.length());
 
     response.length = response_data.length();
+
+    Serial.println("GetInfo command End.");
 
     return response;
 

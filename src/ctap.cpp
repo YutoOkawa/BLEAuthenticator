@@ -1,5 +1,9 @@
 #include "ctap.hpp"
 
+Request::~Request() {
+    Serial.println("Request destroy");
+}
+
 /* ----------------------KeepAliveConstParam---------------------- */
 /** @brief Status:PROCESSINGの識別子(0x01) */
 const int KeepAliveConstParam::KEEPALIVE_PROCESSING = 0x01;
