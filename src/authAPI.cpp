@@ -261,7 +261,7 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     if (params->data[MakeCredentialParam::KEY_PUBKEY_CRED_PARAM].is_array()) {
         /* TODO:サポートするアルゴリズムの定数化 */
         switch (params->pubKeyCredParams->alg) {
-            case -7:
+            case -121:
                 Serial.printf("Algorithm %d is Supported by this authenticator.\n", params->pubKeyCredParams->alg);
                 break;
             default: /* 該当しないalgであればエラーを返す */
@@ -288,11 +288,42 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     /* 10.optionsにrkが設定されている場合の処理 */
 
     /* 11.clientDataHashを使ってAttestation Statementを生成する */
+    /* extensionsは一旦省略する */
+    /* TODO:暗号化された属性鍵を受け取り、復号して保存する */
+    uint8_t *rpIDHash = generateSha256(params->rp->id);
+    uint8_t flags[1] = {0x85};
+    uint8_t counter[4] = {0x00, 0x00, 0x00, 0x01};
+    uint8_t aaguid[16] = {
+        0xF8, 0xA0, 0x11, 0xF3, 0x8C, 0x0A, 0x4D, 
+        0x15, 0x80, 0x06, 0x17, 0x11, 0x1F, 0x9E, 0xDC, 0x7D
+    };
 
-    Serial.println("MakeCredential command end.");
+    // TODO:authDataの長さを取得し、authData本体を作成する
+    uint8_t *authData = new uint8_t[32+1+4+16];
+    for (size_t i=0; i<32; i++) {
+        authData[i] = rpIDHash[i];
+    }
+    authData[32] = flags[0];
+    for (size_t i=0; i<4; i++) {
+        authData[33+i] = counter[i];
+    }
+    for (size_t i=0; i<16; i++) {
+        authData[37+i] = aaguid[i];
+    }
+    CBOR cbor_authData = CBOR();
+    cbor_authData.encode(authData, 32+1+4+16);
+    response_data.append("authaData", cbor_authData);
+    response_data.append("fmt", "packed");
+    
+    // CBORエンコードしResponseを作成する
+    response.responseData = response_data.to_CBOR();
+    response.length = response_data.length();
     delete params;
+    delete authData;
+    Serial.println("MakeCredential command end.");
 
-    throw implement_error("Not implement MakeCredential Content.");
+    return response;
+    // throw implement_error("Not implement MakeCredential Content.");
 }
 
 /**
@@ -521,4 +552,17 @@ bool checkHasParameters(unsigned int command) {
     } else {
         return false;
     }
+}
+
+/**
+ * @brief SHA256を生成する
+ * 
+ * @param data sha256エンコードする対象のデータ
+ * @return uint8_t* Sha256エンコードした値
+ */
+uint8_t *generateSha256(String data) {
+    Sha256.init();
+    Sha256.print(data);
+    uint8_t * result = Sha256.result();
+    return result;
 }

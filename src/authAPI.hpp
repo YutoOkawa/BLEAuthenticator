@@ -6,6 +6,8 @@
 #include <exception>
 #include <M5StickC.h>
 
+#include "sha256.h"
+
 /**
  * @struct AuthenticatorAPICommandParam
  * @brief AuthenticatorAPIのコマンド識別子
@@ -189,6 +191,7 @@ class AuthenticatorAPI {
 };
 
 bool checkHasParameters(unsigned int command);
+uint8_t *generateSha256(String data);
 
 /**
  * @class implement_error
