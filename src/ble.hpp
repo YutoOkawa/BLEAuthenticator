@@ -45,7 +45,11 @@ class ControlPointCallbacks: public BLECharacteristicCallbacks {
     private:
         uint8_t* data;
         bool writeFlag = false;
+        bool continuationFlag = false;
         Request request;
+        size_t request_len;
+        ContinuationFragments *fragment;
+        size_t fragment_len;
         AuthenticatorAPI *authAPI;
         Response response;
 
@@ -53,6 +57,8 @@ class ControlPointCallbacks: public BLECharacteristicCallbacks {
         ~ControlPointCallbacks();
         void onWrite(BLECharacteristic *characteristic);
         Request parseRequest();
+        ContinuationFragments *parseContinuationFragments(size_t length);
+        Request connectRequest(Request request, ContinuationFragments *fragment, size_t request_len, size_t fragment_len);
         Response operateCTAPCommand(Request request);
         Response parsePingCommand();
         Response parseKeepAliveCommand();

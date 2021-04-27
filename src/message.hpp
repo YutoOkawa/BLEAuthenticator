@@ -94,6 +94,10 @@ struct MakeCredentialParam {
     static const int KEY_OPTIONS;
     static const int KEY_PIN_AUTH;
     static const int KEY_PIN_PROTOCOL;
+    /* ------------keydata testParam.------------- */
+    static const int KEY_TPK;
+    static const int KEY_APK;
+    static const int KEY_SKA;
 };
 
 /**

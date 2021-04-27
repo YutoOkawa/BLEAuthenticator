@@ -186,6 +186,10 @@ const int MakeCredentialParam::KEY_PIN_AUTH = 0x08;
 /** @brief PIN protocol version chosen by the client. For this version of the spec, this SHALL be the number 1.*/
 const int MakeCredentialParam::KEY_PIN_PROTOCOL = 0x09;
 
+/* ------------keydata testParam.------------- */
+const int MakeCredentialParam::KEY_TPK = 0x0a;
+const int MakeCredentialParam::KEY_APK = 0x0b;
+const int MakeCredentialParam::KEY_SKA = 0x0c;
 
 /* ----------------------GetAssertionParam---------------------- */
 /** @brief UTF-8 encoded text string (CBOR major type 3). */

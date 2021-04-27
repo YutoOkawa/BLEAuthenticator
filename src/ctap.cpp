@@ -4,6 +4,10 @@ Request::~Request() {
     Serial.println("Request destroy");
 }
 
+ContinuationFragments::~ContinuationFragments() {
+    Serial.println("ContinuationFragments destory");
+}
+
 /* ----------------------KeepAliveConstParam---------------------- */
 /** @brief Status:PROCESSINGの識別子(0x01) */
 const int KeepAliveConstParam::KEEPALIVE_PROCESSING = 0x01;

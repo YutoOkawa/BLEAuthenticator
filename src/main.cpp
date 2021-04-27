@@ -21,7 +21,7 @@ void loop() {
     if (Device.getConnectServer()->getConnect()) {
         notify();
     } else {
-        Serial.println("Device is not connected.");
+        // Serial.println("Device is not connected.");
     }
     delay(2000);
 }

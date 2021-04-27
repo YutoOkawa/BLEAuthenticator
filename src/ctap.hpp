@@ -66,4 +66,25 @@ struct Request {
     ~Request();
 };
 
+/**
+ * @struct ContinuationFragments
+ * @brief 分割パケットのフラグメント
+ */
+struct ContinuationFragments {
+    /**
+     * @var seq
+     * @brief SEQ.
+     *        Packet seqence 0x00..0x7f (high bit always cleared)
+     */
+    unsigned int seq;
+
+    /**
+     * @brief Data.
+     *        Length: 0 to (maxLen-1)
+     */
+    uint8_t *data;
+
+    ~ContinuationFragments();
+};
+
 #endif

@@ -1,4 +1,36 @@
 #include "ble.hpp"
+/* パケットの最大サイズ */
+uint8_t maxsize = 0xff;
+
+/**
+ * @brief responseのデバッグ情報出力(Serial)
+ * 
+ * @param response - responseデータ
+ * @param data_len - responseDataの長さ
+ */
+void requestSerialDebug(Request request, size_t length) {
+    Serial.printf("Request Command:%x\n", request.command);
+    Serial.printf("Request hlen:%x\n", request.hlen);
+    Serial.printf("Request llen:%x\n", request.llen);
+    Serial.printf("Request commandValue:%x\n", request.data.commandValue);
+    for (int i=request.hlen; i < length; i++) {
+        Serial.printf("%.2x", request.data.commandParameter[i]);
+    }
+    Serial.println("");
+}
+
+/**
+ * @brief fragmentのデバッグ情報出力(Serial)
+ * @param fragment - fragmentデータ
+ * @param length - fragmentDataの長さ
+ */
+void fragmentSerialDebug(ContinuationFragments *fragment, size_t length) {
+    Serial.printf("Fragmemt seq:%d\n", fragment->seq);
+    for (int i=0; i < length; i++) {
+        Serial.printf("%.2x", fragment->data[i]);
+    }
+    Serial.println("");
+}
 
 /* ----------------------ServiceConstParam---------------------- */
 const char ServiceConstParam::SERVICE_UUID[37] = "0000fffd-0000-1000-8000-00805f9b34fa";
@@ -73,7 +105,7 @@ void CTAPBLE::startService() {
         CharacteristicConstParam::CHARACTERISTIC_CONTROLPOINTLENGTH_UUID,
         BLECharacteristic::PROPERTY_READ
     );
-    pCpLengthCharacteristic->setValue("0x9b");
+    pCpLengthCharacteristic->setValue(&maxsize, 1);
 
     pSrbBitCharacteristic = pService->createCharacteristic(
         CharacteristicConstParam::CHARACTERISTIC_SERVICEREVISIONBITFIELD_UUID,
@@ -211,6 +243,7 @@ void ConnectServerCallbacks::setConnect(bool connect) {
 
 /* ----------------------ControlPointCallbacks---------------------- */
 ControlPointCallbacks::~ControlPointCallbacks() {
+    Serial.println("ControlPointCallbacks destroyed.");
     delete authAPI;
 }
 
@@ -220,35 +253,49 @@ ControlPointCallbacks::~ControlPointCallbacks() {
  * @param characteristic - 書き込まれたcharacteristic
  */
 void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
-    // Request req;
-    // Response res;
-
-    this->data = characteristic->getData();
-    this->request = parseRequest();
-    try {
-        this->response = operateCTAPCommand(this->request);
-    } catch (implement_error e) { /* 未実装コマンドだった場合 */
-        Serial.println(e.what());
+    this->data = characteristic->getData(); /* パケットデータの取得 */
+    if (!this->continuationFlag) { /* 初期パケットのパース */
+        this->request_len = characteristic->getValue().length()-4;
+        this->request = parseRequest();
+    } else { /* 継続パケットのパース */
+        this->fragment_len = characteristic->getValue().length()-1;
+        this->fragment = parseContinuationFragments(this->fragment_len);
+        this->request = connectRequest(this->request, this->fragment, this->request_len, this->fragment_len);
+        this->request_len = this->request_len + this->fragment_len;
+        if (characteristic->getValue().length() != maxsize+1) { /* 継続パケットの終了判定 */
+            // this->continuationFlag = false;
+            Serial.println("finish!");
+        }
     }
 
-    Serial.println("");
-    for (size_t i=0; i < response.length; ++i) {
-        Serial.printf("%.2x", response.responseData[i]);
-    }
-    Serial.println("");
+    if (!this->continuationFlag) { /* パケット処理完了後 */
+         try {
+            this->response = operateCTAPCommand(this->request);
+        } catch (implement_error e) { /* 未実装コマンドだった場合 */
+            Serial.println(e.what());
+        }
 
-    // 書き込みが終わればフラグを立てる
-    this->writeFlag = true;
+        Serial.println("");
+        for (size_t i=0; i < response.length; ++i) {
+            Serial.printf("%.2x", response.responseData[i]);
+        }
+        Serial.println("");
+
+        // 書き込みが終わればフラグを立てる
+        this->writeFlag = true;
+        this->continuationFlag = false;
+        delete[] request.data.commandParameter;
+    } else { /* fragment待ち受け処理 */
+        Serial.println("waiting for continuationFragments.");
+    }
 
     // TODO:Request, Response, authAPIのメモリ解放
     // Callbackの内部で保持しているため、デストラクタの呼び出しでdeleteするのが難しい
     // onWriteが終わったタイミングでデストラクタが呼び出されてそれぞれが解放されるのがベスト
     // この3つをまとめた構造体を作ってデストラクタで解放するか
-    delete[] request.data.commandParameter;
     Serial.println("on Write End.");
 }
 
-// TODO: パース関数のエラー処理
 /**
  * @brief dataをパースし、Requestを返す
  * 
@@ -256,32 +303,71 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
  * @return Request - CTAPに沿ったRequest形式
  */
 Request ControlPointCallbacks::parseRequest() {
-    // TODO: commandがなかった場合のエラー処理
-    // Commandを取得
+    /* 各1byteデータ部の取得 */
     this->request.command = (unsigned int)*this->data;
     this->data++;
-
-    // TODO: HLENがなかった場合のエラー処理
-    // HLENを取得
     this->request.hlen = (unsigned int)*this->data;
     this->data++;
-
-    // TODO: LLENがなかった場合のエラー処理
-    // LLENを取得
     this->request.llen = (unsigned int)*this->data;
     this->data++;
-
-    // TODO: Dataがなかった場合のエラー処理
-    // Dataを取得
-    // Command Valueを取得
     this->request.data.commandValue = (unsigned int)*this->data;
     this->data++;
-    // Command Parameterを取得
-    this->request.data.commandParameter = new uint8_t[this->request.llen-1];
-    memcpy(this->request.data.commandParameter, this->data, this->request.llen-1);
+    /* データ部の取得 */
+    this->request.data.commandParameter = new uint8_t[this->request.llen];
+    memcpy(this->request.data.commandParameter, this->data, this->request.llen);
 
-    Serial.println("parseRequest End.");
+    if (request.llen == (unsigned int)maxsize) { /* パケットが最大サイズの場合fragmentを待ち受ける */
+        this->continuationFlag = true;
+    }
     return this->request;
+}
+
+/**
+ * @brief Fragmentをパースする
+ * 
+ * @param length - fragmentのデータサイズ
+ * @return ContinuationFragments* パースされたFragment
+ */
+ContinuationFragments *ControlPointCallbacks::parseContinuationFragments(size_t length) {
+    ContinuationFragments *fragment = new ContinuationFragments;
+    /* シーケンス番号の取得 */
+    fragment->seq = (unsigned int)*this->data;
+    this->data++;
+    /* データ部の取得 */
+    fragment->data = new uint8_t[length];
+    memcpy(fragment->data, this->data, length);
+
+    return fragment;
+}
+
+/**
+ * @brief RequestとFragmentを結合する
+ * 
+ * @param request Requestパケット
+ * @param fragment 結合するFragment
+ * @param request_len Requestのデータ部の長さ
+ * @param fragment_len Fragmentのデータ部の長さ
+ * @return Request 結合したRequest
+ */
+Request ControlPointCallbacks::connectRequest(Request request, ContinuationFragments *fragment, size_t request_len, size_t fragment_len) {
+    /* Request元データの退避 */
+    uint8_t *requestData = new uint8_t[request_len];
+    memcpy(requestData, request.data.commandParameter, request_len);
+    delete request.data.commandParameter;
+
+    /* 新しいRequestデータの生成 */
+    request.data.commandParameter = new uint8_t[request_len+fragment_len];
+    for(size_t i=0; i<request_len; i++) { /* Request元データの格納 */
+        request.data.commandParameter[i] = requestData[i];
+    }
+    for(size_t i=0; i<fragment_len; i++) { /* Fragmentデータの格納 */
+        request.data.commandParameter[request_len+i] = fragment->data[i];
+    }
+
+    // fragmentデータの消去
+    delete this->fragment;
+
+    return request;
 }
 
 /**
