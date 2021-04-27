@@ -2,13 +2,13 @@
 
 /* ----------------------Command---------------------- */
 Command::~Command() {
-    Serial.println("Command destroy");
+    // Serial.println("Command destroy");
     // delete[] commandParameter;
 }
 
 /* ----------------------Response---------------------- */
 Response::~Response() {
-    Serial.println("Response destroy");
+    // Serial.println("Response destroy");
     // delete[] responseData;
 }
 

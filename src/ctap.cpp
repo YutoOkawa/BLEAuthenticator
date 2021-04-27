@@ -1,11 +1,11 @@
 #include "ctap.hpp"
 
 Request::~Request() {
-    Serial.println("Request destroy");
+    // Serial.println("Request destroy");
 }
 
 ContinuationFragments::~ContinuationFragments() {
-    Serial.println("ContinuationFragments destory");
+    // Serial.println("ContinuationFragments destory");
 }
 
 /* ----------------------KeepAliveConstParam---------------------- */

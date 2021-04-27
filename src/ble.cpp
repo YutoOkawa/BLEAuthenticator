@@ -243,7 +243,7 @@ void ConnectServerCallbacks::setConnect(bool connect) {
 
 /* ----------------------ControlPointCallbacks---------------------- */
 ControlPointCallbacks::~ControlPointCallbacks() {
-    Serial.println("ControlPointCallbacks destroyed.");
+    // Serial.println("ControlPointCallbacks destroyed.");
     delete authAPI;
 }
 
@@ -263,8 +263,8 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
         this->request = connectRequest(this->request, this->fragment, this->request_len, this->fragment_len);
         this->request_len = this->request_len + this->fragment_len;
         if (characteristic->getValue().length() != maxsize+1) { /* 継続パケットの終了判定 */
-            // this->continuationFlag = false;
-            Serial.println("finish!");
+            this->continuationFlag = false;
+            // Serial.println("finish!");
         }
     }
 
@@ -293,7 +293,7 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
     // Callbackの内部で保持しているため、デストラクタの呼び出しでdeleteするのが難しい
     // onWriteが終わったタイミングでデストラクタが呼び出されてそれぞれが解放されるのがベスト
     // この3つをまとめた構造体を作ってデストラクタで解放するか
-    Serial.println("on Write End.");
+    // Serial.println("on Write End.");
 }
 
 /**
@@ -396,7 +396,7 @@ Response ControlPointCallbacks::operateCTAPCommand(Request request) {
             throw implement_error("Not implement CTAP Command."); break;
     }
 
-    Serial.println("OperateCommand End.");
+    // Serial.println("OperateCommand End.");
     return this->response;
 }
 
@@ -425,7 +425,7 @@ Response ControlPointCallbacks::parseKeepAliveCommand() {
  */
 Response ControlPointCallbacks::parseMsgCommand() {
     if (checkHasParameters(this->request.data.commandValue)) { /* パラメータを必要とするもの */
-        this->authAPI = new AuthenticatorAPI(this->request.data.commandValue, this->request.data.commandParameter, this->request.llen - this->request.hlen - 1);
+        this->authAPI = new AuthenticatorAPI(this->request.data.commandValue, this->request.data.commandParameter, this->request_len);
     } else { /* パラメータを必要としなもの */
         this->authAPI = new AuthenticatorAPI(this->request.data.commandValue);
     }
@@ -436,7 +436,7 @@ Response ControlPointCallbacks::parseMsgCommand() {
         throw implement_error(e.what());
     }
 
-    Serial.println("parseMsgCommand End.");
+    // Serial.println("parseMsgCommand End.");
 
     return this->response;
 }

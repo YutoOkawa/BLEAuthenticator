@@ -28,13 +28,13 @@ const int AuthenticatorAPICommandParam::COMMAND_VENDORLAST = 0xbf;
 
 /* ----------------------PublicKeyCredentialUserEntity---------------------- */
 PublicKeyCredentialUserEntity::~PublicKeyCredentialUserEntity() {
-    Serial.println("delete PublicKeyCredentialUserEntity");
+    // Serial.println("delete PublicKeyCredentialUserEntity");
     delete[] this->id;
 }
 
 /* ----------------------ParsedMakeCredentialParams---------------------- */
 ParsedMakeCredentialParams::~ParsedMakeCredentialParams() {
-    Serial.println("delete ParsedMakeCredentialParams");
+    // Serial.println("delete ParsedMakeCredentialParams");
     delete[] this->hash;
     delete this->rp;
     delete this->user;
@@ -54,7 +54,7 @@ void responseSerialDebug(Response response, size_t data_len) {
     for (size_t i=0; i < data_len; ++i) {
         Serial.printf("%.2x", response.responseData[i]);
     }
-    Serial.println("Serial Debug");
+    // Serial.println("Serial Debug");
 }
 
 /**
@@ -130,7 +130,7 @@ AuthenticatorAPI::AuthenticatorAPI(unsigned int command, uint8_t *parameter, uns
 }
 
 AuthenticatorAPI::~AuthenticatorAPI() {
-    Serial.println("authAPI destroy");
+    // Serial.println("authAPI destroy");
 }
 
 /**
@@ -218,7 +218,6 @@ Response AuthenticatorAPI::operateCommand() {
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETASSERTION) {
         return this->authenticatorGetAssertion();
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETINFO) {
-        Serial.println("Get Ifo");
         return this->authenticatorGetInfo();
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_CLIENTPIN) {
         return this->authenticatorClientPIN();
@@ -262,6 +261,9 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
         /* TODO:サポートするアルゴリズムの定数化 */
         switch (params->pubKeyCredParams->alg) {
             case -121:
+                Serial.printf("Algorithm %d is Supported by this authenticator.\n", params->pubKeyCredParams->alg);
+                break;
+            case -50:
                 Serial.printf("Algorithm %d is Supported by this authenticator.\n", params->pubKeyCredParams->alg);
                 break;
             default: /* 該当しないalgであればエラーを返す */
@@ -320,7 +322,7 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     response.length = response_data.length();
     delete params;
     delete authData;
-    Serial.println("MakeCredential command end.");
+    // Serial.println("MakeCredential command end.");
 
     return response;
     // throw implement_error("Not implement MakeCredential Content.");
@@ -431,7 +433,7 @@ Response AuthenticatorAPI::authenticatorGetInfo() {
 
     response.length = response_data.length();
 
-    Serial.println("GetInfo command End.");
+    // Serial.println("GetInfo command End.");
 
     return response;
 
