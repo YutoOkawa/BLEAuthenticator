@@ -2,6 +2,7 @@
 #define INCLUDED_authAPI_h_
 
 #include "message.hpp"
+#include "abs.hpp"
 #include "YACL.h"
 #include <exception>
 #include <M5StickC.h>

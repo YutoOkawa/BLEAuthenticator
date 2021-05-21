@@ -209,9 +209,41 @@ Response AuthenticatorAPI::operateCommand() {
             stringSerialDebug("pubKeyCredParams.type:", params->pubKeyCredParams->type);
         }
 
+        if (params->data[MakeCredentialParam::KEY_TPK].is_bytestring()) {
+            CBOR cbor_tpk = params->data[MakeCredentialParam::KEY_TPK];
+            uint8_t *raw_tpk = new uint8_t[cbor_tpk.get_bytestring_len()];
+            cbor_tpk.get_bytestring(raw_tpk); // CBORデータが正しく取れていることは確認済み
+            CBOR decoded_tpk = CBOR(raw_tpk, cbor_tpk.get_bytestring_len(), true);
+            TPK *tpk = new TPK(decoded_tpk);
+            tpk->parse();
+            delete raw_tpk;
+            // delete tpk;
+        }
+
+        if (params->data[MakeCredentialParam::KEY_APK].is_bytestring()) {
+            CBOR cbor_apk = params->data[MakeCredentialParam::KEY_APK];
+            uint8_t *raw_apk = new uint8_t[cbor_apk.get_bytestring_len()];
+            cbor_apk.get_bytestring(raw_apk);
+            CBOR decoded_apk = CBOR(raw_apk, cbor_apk.get_bytestring_len(), true);
+            APK *apk = new APK(decoded_apk);
+            apk->parse();
+            delete raw_apk;
+            // delete apk;
+        }
+
+        if (params->data[MakeCredentialParam::KEY_SKA].is_bytestring()) {
+            CBOR cbor_ska = params->data[MakeCredentialParam::KEY_SKA];
+            uint8_t *raw_ska = new uint8_t[cbor_ska.get_bytestring_len()];
+            cbor_ska.get_bytestring(raw_ska);
+            CBOR decoded_ska = CBOR(raw_ska, cbor_ska.get_bytestring_len(), true);
+            SKA *ska = new SKA(decoded_ska);
+            ska->parse();
+            delete raw_ska;
+            // delete ska;
+        }
+
         /* API呼び出し */
         response = this->authenticatorMakeCredential(params);
-
 
         return response;
 
@@ -286,6 +318,7 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     /* 8.ユーザのローカル認証を要求 */
 
     /* 9.アルゴリズムにしたがって鍵ペアを生成する */
+    /* 鍵情報を取り出す */
 
     /* 10.optionsにrkが設定されている場合の処理 */
 
