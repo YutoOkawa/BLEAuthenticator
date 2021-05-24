@@ -2,19 +2,19 @@
 
 void test() {
     // // ECP->OCT->ECPの転写テスト
-    // ECP test;
-    // ECP_generator(&test);
-    // Serial.print("ECP generator:");
-    // ECP_output(&test);
-    // char char_test[MODBYTES_B256_28+1];
-    // octet octet_test = {0, sizeof(char_test), char_test};
-    // ECP_toOctet(&octet_test, &test, true);
-    // Serial.print("ECP generator OCT:");
-    // OCT_output(&octet_test);
-    // ECP test1;
-    // ECP_fromOctet(&test1, &octet_test);
-    // Serial.print("ECP generator OCT→ECP");
-    // ECP_output(&test1);
+    ECP test;
+    ECP_generator(&test);
+    Serial.print("ECP generator:");
+    ECP_output(&test);
+    char char_test[MODBYTES_B256_28+1];
+    octet octet_test = {0, sizeof(char_test), char_test};
+    ECP_toOctet(&octet_test, &test, true);
+    Serial.print("ECP generator OCT:");
+    OCT_output(&octet_test);
+    ECP test1;
+    ECP_fromOctet(&test1, &octet_test);
+    Serial.print("ECP generator OCT→ECP");
+    ECP_output(&test1);
 }
 
 /* ----------------------TPK---------------------- */
@@ -42,9 +42,15 @@ TPK::~TPK() {
  * @brief cborデータから鍵データをパースする
  */
 void TPK::parse() {
-    /* gのデータのパース(gのみ値がInfinityとなってしまう) */
+    // Serial.printf("g:");
     this->g = parseECPElement(this->cbor_tpk, "g");
-    ECP_output(this->g);
+    // ECP_output(this->g);
+    for (int i=0; i<=8; i++) {
+        char *key = new char[2];
+        sprintf(key, "h%d", i);
+        // Serial.printf("%s:", key);
+        this->h.push_back(*parseECP2Element(this->cbor_tpk, key));
+    }
 }
 
 /**
@@ -127,9 +133,22 @@ APK::~APK() {
  */
 void APK::parse() {
     this->A0 = parseECP2Element(this->cbor_apk, "A0");
-    ECP2_output(this->A0);
+    // ECP2_output(this->A0);
+    for (int i=1; i<=4; i++) {
+        char *Akey = new char[2];
+        char *Bkey = new char[2];
+        sprintf(Akey, "A%d", i);
+        sprintf(Bkey, "B%d", i);
+        // Serial.printf("%s:", Akey);
+        this->A.push_back(*parseECP2Element(this->cbor_apk, Akey));
+        // ECP2_output(&this->A[i-1]);
+        // Serial.printf("%s:", Bkey);
+        this->B.push_back(*parseECP2Element(this->cbor_apk, Bkey));
+        // ECP2_output(&this->B[i-1]);
+    }
+    // Serial.printf("C:");
     this->C = parseECPElement(this->cbor_apk, "C");
-    ECP_output(this->C);
+    // ECP_output(this->C);
 }
 
 /**
@@ -230,10 +249,13 @@ SKA::~SKA() {
  * 
  */
 void SKA::parse() {
+    // Serial.printf("KBase:");
     this->KBase = parseECPElement(this->cbor_ska, "KBase");
-    ECP_output(this->KBase);
+    // ECP_output(this->KBase);
+    // Serial.printf("K0:");
     this->K0 = parseECPElement(this->cbor_ska, "K0");
-    ECP_output(this->K0);
+    // ECP_output(this->K0);
+    this->K["K2"] = *parseECPElement(this->cbor_ska, "K2");
 }
 
 /**
