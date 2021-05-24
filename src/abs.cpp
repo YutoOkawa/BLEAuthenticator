@@ -31,6 +31,9 @@ TPK::TPK(CBOR cbor_tpk) {
     this->cbor_tpk = cbor_tpk;
 }
 
+/**
+ * @brief Destroy the TPK::TPK object
+ */
 TPK::~TPK() {
 
 }
@@ -54,12 +57,48 @@ ECP *TPK::getG() {
 }
 
 /**
+ * @brief getter
+ * 
+ * @return MsgPack::arr_t<ECP2>  hを返す
+ */
+MsgPack::arr_t<ECP2> TPK::getH() {
+    return this->h;
+}
+
+/**
+ * @brief getter
+ * 
+ * @return MsgPack::map_t<String, int> 属性集合を返す
+ */
+MsgPack::map_t<String, int> TPK::getAttriblist() {
+    return this->attriblist;
+}
+
+/**
  * @brief setter
  * 
  * @param g Gをセットする
  */
 void TPK::setG(ECP *g) {
     this->g = g;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param h hをセットする
+ */
+void TPK::setH(MsgPack::arr_t<ECP2> h) {
+    this->h = h;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param attriblist 属性集合をセットする 
+ */
+void TPK::setAttriblist(MsgPack::map_t<String, int> attriblist) {
+    this->attriblist = attriblist;
 }
 
 /* ----------------------APK---------------------- */
@@ -76,6 +115,9 @@ APK::APK(CBOR cbor_apk) {
     this->cbor_apk = cbor_apk;
 }
 
+/**
+ * @brief Destroy the APK::APK object
+ */
 APK::~APK() {
     
 }
@@ -102,16 +144,62 @@ ECP2 *APK::getA0() {
 /**
  * @brief getter
  * 
+ * @return MsgPack::arr_t<ECP2> Aを返す
+ */
+MsgPack::arr_t<ECP2> APK::getA() {
+    return this->A;
+}
+
+/**
+ * @brief getter
+ * 
+ * @return MsgPack::arr_t<ECP2> Bを返す
+ */
+MsgPack::arr_t<ECP2> APK::getB() {
+    return this->B;
+}
+
+/**
+ * @brief getter
+ * 
  * @return ECP Cを返す
  */
 ECP *APK::getC() {
     return this->C;
 }
 
+/**
+ * @brief setter
+ * 
+ * @param A0 A0をセットする
+ */
 void APK::setA0(ECP2 *A0) {
     this->A0 = A0;
 }
 
+/**
+ * @brief setter
+ * 
+ * @param A Aをセットする
+ */
+void APK::setA(MsgPack::arr_t<ECP2> A) {
+    this->A = A;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param B Bをセットする
+ */
+void APK::setB(MsgPack::arr_t<ECP2> B) {
+    this->B = B;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param C Cをセットする
+ */
 void APK::setC(ECP *C) {
     this->C = C;
 }
@@ -121,10 +209,18 @@ SKA::SKA() {
 
 }
 
+/**
+ * @brief Construct a new SKA::SKA object
+ * 
+ * @param cbor_ska skaのCBOR形式
+ */
 SKA::SKA(CBOR cbor_ska) {
     this->cbor_ska = cbor_ska;
 }
 
+/**
+ * @brief Destroy the SKA::SKA object
+ */
 SKA::~SKA() {
     
 }
@@ -140,18 +236,47 @@ void SKA::parse() {
     ECP_output(this->K0);
 }
 
+/**
+ * @brief getter
+ * 
+ * @return ECP* KBaseを返す
+ */
 ECP *SKA::getKBase() {
     return this->KBase;
 }
 
+/**
+ * @brief getter
+ * 
+ * @return ECP* K0を返す
+ */
 ECP *SKA::getK0() {
     return this->K0;
 }
 
+/**
+ * @brief getter
+ * 
+ * @return MsgPack::map_t<String, ECP> Kを返す
+ */
+MsgPack::map_t<String, ECP> SKA::getK() {
+    return this->K;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param KBase KBaseをセットする
+ */
 void SKA::setKBase(ECP *KBase) {
     this->KBase = KBase;
 }
 
+/**
+ * @brief setter
+ * 
+ * @param K0 K0をセットする
+ */
 void SKA::setK0(ECP *K0) {
     this->K0 = K0;
 }

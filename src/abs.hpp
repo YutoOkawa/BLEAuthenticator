@@ -9,8 +9,8 @@
 class TPK {
     private:
         ECP *g;
-        // std::list<ECP2> h;
-        // std::map<std::string, int> attriblist;
+        MsgPack::arr_t<ECP2> h;
+        MsgPack::map_t<String, int> attriblist;
         CBOR cbor_tpk;
 
     public:
@@ -21,18 +21,18 @@ class TPK {
         void parse();
 
         ECP *getG();
-        // std::list<ECP2> getH();
-        // std::map<std::string, int> getAttriblist();
+        MsgPack::arr_t<ECP2> getH();
+        MsgPack::map_t<String, int> getAttriblist();
         void setG(ECP *g);
-        // void setH(std::list<ECP2> h);
-        // void setAttriblist(std::map<std::string, int> attriblist);
+        void setH(MsgPack::arr_t<ECP2> h);
+        void setAttriblist(MsgPack::map_t<String, int> attriblist);
 };
 
 class APK {
     private:
         ECP2 *A0;
-        // std::list<ECP2> A;
-        // std::list<ECP2> B;
+        MsgPack::arr_t<ECP2> A;
+        MsgPack::arr_t<ECP2> B;
         ECP *C;
         CBOR cbor_apk;
 
@@ -44,12 +44,12 @@ class APK {
         void parse();
         
         ECP2 *getA0();
-        // std::list<ECP2> getA();
-        // std::list<ECP2> getB();
+        MsgPack::arr_t<ECP2> getA();
+        MsgPack::arr_t<ECP2> getB();
         ECP *getC();
         void setA0(ECP2 *A0);
-        // void setA(std::list<ECP2> A);
-        // void setB(std::list<ECP2> B);
+        void setA(MsgPack::arr_t<ECP2> A);
+        void setB(MsgPack::arr_t<ECP2> B);
         void setC(ECP *C);
 };
 
@@ -57,7 +57,7 @@ class SKA {
     private:
         ECP *KBase;
         ECP *K0;
-        // std::map<std::string, ECP> K;
+        MsgPack::map_t<String, ECP> K;
         CBOR cbor_ska;
 
     public:
@@ -69,30 +69,30 @@ class SKA {
 
         ECP *getKBase();
         ECP *getK0();
-        // std::map<std::string, ECP> getK();
+        MsgPack::map_t<String, ECP> getK();
         void setKBase(ECP *KBase);
         void setK0(ECP *K0);
-        // void setK(std::map<std::string, ECP> K);
+        void setK(MsgPack::map_t<String, ECP> K);
 };
 
 class Signature {
     private:
         ECP Y;
         ECP W;
-        // std::list<ECP> S;
-        // std::list<ECP2> P;
+        MsgPack::arr_t<ECP> S;
+        MsgPack::arr_t<ECP2> P;
 
     public:
         Signature();
 
         ECP getY();
         ECP getW();
-        // std::list<ECP> getS();
-        // std::list<ECP2> getP();
+        MsgPack::arr_t<ECP> getS();
+        MsgPack::arr_t<ECP2> getP();
         void setY(ECP Y);
         void setW(ECP W);
-        // void setS(std::list<ECP> S);
-        // void setP(std::list<ECP2> P);
+        void setS(MsgPack::arr_t<ECP>);
+        void setP(MsgPack::arr_t<ECP2> P);
 };
 
 Signature sign(TPK tpk, APK apk, SKA ska, char *message, char *policy);

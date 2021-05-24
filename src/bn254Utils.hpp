@@ -6,6 +6,7 @@
 #include <string.h>
 #include <M5StickC.h>
 #include "YACL.h"
+#include "MsgPack.h"
 
 using namespace core;
 using namespace B256_28;
