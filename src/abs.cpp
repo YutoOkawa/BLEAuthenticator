@@ -81,6 +81,15 @@ MsgPack::map_t<String, int> TPK::getAttriblist() {
 }
 
 /**
+ * @brief getter
+ * 
+ * @return CBOR cbor_tpk
+ */
+CBOR TPK::getCBOR() {
+    return this->cbor_tpk;
+}
+
+/**
  * @brief setter
  * 
  * @param g Gをセットする
@@ -105,6 +114,15 @@ void TPK::setH(MsgPack::arr_t<ECP2> h) {
  */
 void TPK::setAttriblist(MsgPack::map_t<String, int> attriblist) {
     this->attriblist = attriblist;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param cbor_tpk cbor_tpk 
+ */
+void TPK::setCBOR(CBOR cbor_tpk) {
+    this->cbor_tpk = cbor_tpk;
 }
 
 /* ----------------------APK---------------------- */
@@ -188,6 +206,15 @@ ECP *APK::getC() {
 }
 
 /**
+ * @brief getter
+ * 
+ * @return CBOR* cbor_apk 
+ */
+CBOR APK::getCBOR() {
+    return this->cbor_apk;
+}
+
+/**
  * @brief setter
  * 
  * @param A0 A0をセットする
@@ -221,6 +248,15 @@ void APK::setB(MsgPack::arr_t<ECP2> B) {
  */
 void APK::setC(ECP *C) {
     this->C = C;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param cbor_apk cbor_apkをセットする 
+ */
+void APK::setCBOR(CBOR cbor_apk) {
+    this->cbor_apk = cbor_apk;
 }
 
 /* ----------------------SKA---------------------- */
@@ -286,6 +322,15 @@ MsgPack::map_t<String, ECP> SKA::getK() {
 }
 
 /**
+ * @brief getter
+ * 
+ * @return CBOR cbor_ska
+ */
+CBOR SKA::getCBOR() {
+    return this->cbor_ska;
+}
+
+/**
  * @brief setter
  * 
  * @param KBase KBaseをセットする
@@ -301,6 +346,15 @@ void SKA::setKBase(ECP *KBase) {
  */
 void SKA::setK0(ECP *K0) {
     this->K0 = K0;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param cbor_ska cbor_skaをセットする 
+ */
+void SKA::setCBOR(CBOR cbor_ska) {
+    this->cbor_ska = cbor_ska;
 }
 
 /* ----------------------Signature--------------------- */

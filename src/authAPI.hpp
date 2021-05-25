@@ -25,6 +25,25 @@ struct AuthenticatorAPICommandParam {
 };
 
 /**
+ * @struct AuthDataSizeParam
+ * @brief AuthDataの固定長サイズ
+ */
+struct AuthDataSizeParam {
+    static const int AUTHDATA_RPIDHASH;
+    static const int AUTHDATA_FLAGS;
+    static const int AUTHDATA_COUNTER;
+};
+
+/**
+ * @struct AttestedCredentialData
+ * @brief AttestedCredentialDataの固定長サイズ
+ */
+struct AttestedCredentialDataSizeParam {
+    static const int ATTESTED_AAGUID;
+    static const int ATTESTED_LENGTH; 
+};
+
+/**
  * @brief AuthenticatorMakeCredentialの引数であるRPの構造体
  * @struct PublicKeyCredentialRpEntity
  */
@@ -168,6 +187,24 @@ class AuthenticatorAPI {
          */
         unsigned int length;
 
+        /**
+         * @var tpk
+         * @brief Trustee Public Key
+         */
+        TPK *tpk;
+
+        /**
+         * @var apk
+         * @brief Public Key
+         */
+        APK *apk;
+
+        /**
+         * @var ska
+         * @brief User Secret Key
+         */
+        SKA *ska;
+
     public:
         AuthenticatorAPI();
         AuthenticatorAPI(unsigned int command);
@@ -186,9 +223,15 @@ class AuthenticatorAPI {
         unsigned int getCommand();
         uint8_t *getParameter();
         unsigned int getLength();
+        TPK *getTPK();
+        APK *getAPK();
+        SKA *getSKA();
         void setCommand(unsigned int command);
         void setParameter(uint8_t *parameter);
         void setLength(unsigned int length);
+        void setTPK(TPK *tpk);
+        void setAPK(APK *APK);
+        void setSKA(SKA *SKA);
 };
 
 bool checkHasParameters(unsigned int command);

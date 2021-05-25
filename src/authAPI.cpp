@@ -26,6 +26,25 @@ const int AuthenticatorAPICommandParam::COMMAND_VENDORFIRST = 0x40;
 const int AuthenticatorAPICommandParam::COMMAND_VENDORLAST = 0xbf;
 
 
+/* ----------------------AuthDataSizeParam---------------------- */
+/** @brief AuthDataのRPIDHashの固定長サイズ(32bytes) */
+const int AuthDataSizeParam::AUTHDATA_RPIDHASH = 32;
+
+/** @brief AuthDataのFlagsの固定長サイズ(1bytes) */
+const int AuthDataSizeParam::AUTHDATA_FLAGS = 1;
+
+/** @brief AuthDataのCounterの固定長サイズ(4bytes) */
+const int AuthDataSizeParam::AUTHDATA_COUNTER = 4;
+
+
+/* ----------------------AttestedCredentialDataSizeParam---------------------- */
+/** @brief AttestedCredentialDataのAAGUIDの固定長サイズ(16bytes) */
+const int AttestedCredentialDataSizeParam::ATTESTED_AAGUID = 16;
+
+/** @brief AttestedCredentialDataのLENGTHの固定長サイズ2bytes) */
+const int AttestedCredentialDataSizeParam::ATTESTED_LENGTH = 2;
+
+
 /* ----------------------PublicKeyCredentialUserEntity---------------------- */
 PublicKeyCredentialUserEntity::~PublicKeyCredentialUserEntity() {
     // Serial.println("delete PublicKeyCredentialUserEntity");
@@ -214,8 +233,8 @@ Response AuthenticatorAPI::operateCommand() {
             uint8_t *raw_tpk = new uint8_t[cbor_tpk.get_bytestring_len()];
             cbor_tpk.get_bytestring(raw_tpk); // CBORデータが正しく取れていることは確認済み
             CBOR decoded_tpk = CBOR(raw_tpk, cbor_tpk.get_bytestring_len(), true);
-            TPK *tpk = new TPK(decoded_tpk);
-            tpk->parse();
+            this->tpk = new TPK(decoded_tpk);
+            this->tpk->parse();
             delete raw_tpk;
             // delete tpk;
         }
@@ -225,8 +244,8 @@ Response AuthenticatorAPI::operateCommand() {
             uint8_t *raw_apk = new uint8_t[cbor_apk.get_bytestring_len()];
             cbor_apk.get_bytestring(raw_apk);
             CBOR decoded_apk = CBOR(raw_apk, cbor_apk.get_bytestring_len(), true);
-            APK *apk = new APK(decoded_apk);
-            apk->parse();
+            this->apk = new APK(decoded_apk);
+            this->apk->parse();
             delete raw_apk;
             // delete apk;
         }
@@ -236,8 +255,8 @@ Response AuthenticatorAPI::operateCommand() {
             uint8_t *raw_ska = new uint8_t[cbor_ska.get_bytestring_len()];
             cbor_ska.get_bytestring(raw_ska);
             CBOR decoded_ska = CBOR(raw_ska, cbor_ska.get_bytestring_len(), true);
-            SKA *ska = new SKA(decoded_ska);
-            ska->parse();
+            this->ska = new SKA(decoded_ska);
+            this->ska->parse();
             delete raw_ska;
             // delete ska;
         }
@@ -325,30 +344,69 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     /* 11.clientDataHashを使ってAttestation Statementを生成する */
     /* extensionsは一旦省略する */
     /* TODO:暗号化された属性鍵を受け取り、復号して保存する */
+    
+    /* 固定長バイトの定義 */
     uint8_t *rpIDHash = generateSha256(params->rp->id);
-    uint8_t flags[1] = {0x85};
-    uint8_t counter[4] = {0x00, 0x00, 0x00, 0x01};
-    uint8_t aaguid[16] = {
+    uint8_t flags[AuthDataSizeParam::AUTHDATA_FLAGS] = {0x85};
+    uint8_t counter[AuthDataSizeParam::AUTHDATA_COUNTER] = {0x00, 0x00, 0x00, 0x01};
+    uint8_t aaguid[AttestedCredentialDataSizeParam::ATTESTED_AAGUID] = {
         0xF8, 0xA0, 0x11, 0xF3, 0x8C, 0x0A, 0x4D, 
         0x15, 0x80, 0x06, 0x17, 0x11, 0x1F, 0x9E, 0xDC, 0x7D
     };
+    uint8_t length[2] = {0x00, 0x00};
 
-    // TODO:authDataの長さを取得し、authData本体を作成する
-    uint8_t *authData = new uint8_t[32+1+4+16];
-    for (size_t i=0; i<32; i++) {
-        authData[i] = rpIDHash[i];
+    /* 公開鍵サイズの取得 */
+    size_t apk_size = this->apk->getCBOR().get_bytestring_len();
+    for (size_t i=0; i<apk_size; i++) { /* publicKeyの長さを測定 */
+        length[1]++;
     }
-    authData[32] = flags[0];
-    for (size_t i=0; i<4; i++) {
-        authData[33+i] = counter[i];
+
+    /* AuthDataのデータサイズ定義 */
+    size_t authData_length = AuthDataSizeParam::AUTHDATA_RPIDHASH + AuthDataSizeParam::AUTHDATA_FLAGS
+     + AuthDataSizeParam::AUTHDATA_COUNTER + AttestedCredentialDataSizeParam::ATTESTED_AAGUID
+     + AttestedCredentialDataSizeParam::ATTESTED_LENGTH + apk_size;
+
+    /* AuthDataのデータ定義 */
+    uint8_t *authData = new uint8_t[authData_length];
+    size_t authData_pointer = 0;
+    for (size_t i=0; i<AuthDataSizeParam::AUTHDATA_RPIDHASH; i++) { /* rpIDHashの格納 */
+        authData[authData_pointer] = rpIDHash[i];
+        authData_pointer++;
     }
-    for (size_t i=0; i<16; i++) {
-        authData[37+i] = aaguid[i];
+    authData[AuthDataSizeParam::AUTHDATA_RPIDHASH] = flags[0]; /* Flagsの格納 */
+    authData_pointer++;
+    for (size_t i=0; i<AuthDataSizeParam::AUTHDATA_COUNTER; i++) { /* Counterの格納 */
+        authData[authData_pointer] = counter[i];
+        authData_pointer++;
     }
+    for (size_t i=0; i<AttestedCredentialDataSizeParam::ATTESTED_AAGUID; i++) { /* AAGUIDの格納 */
+        authData[authData_pointer] = aaguid[i];
+        authData_pointer++;
+    }
+    for (size_t i=0; i<AttestedCredentialDataSizeParam::ATTESTED_LENGTH; i++) { /* lengthの格納 */
+        authData[authData_pointer] = length[i];
+        authData_pointer++;
+    }
+    uint8_t *raw_apk = new uint8_t[apk_size];
+    this->apk->getCBOR().get_bytestring(raw_apk); /* cbor->uint8_t */
+    for (size_t i=0; i<apk_size; i++) { /* APKの格納 */
+        authData[authData_pointer] = raw_apk[i];
+        authData_pointer++;
+    }
+
+    /* Attestation Statementのデータ定義 */
+    CBORPair attStmt = CBORPair(100);
+    attStmt.append("alg", "abs");
+    attStmt.append("sig", "no data.");
+    attStmt.append("key", "no data.");
+    const uint8_t *cbor_attStmt = attStmt.to_CBOR();
+
+    /* CBORデータの作成 */
     CBOR cbor_authData = CBOR();
-    cbor_authData.encode(authData, 32+1+4+16);
+    cbor_authData.encode(authData, authData_length);
     response_data.append("authaData", cbor_authData);
     response_data.append("fmt", "packed");
+    response_data.append("attStmt", cbor_attStmt);
     
     // CBORエンコードしResponseを作成する
     response.responseData = response_data.to_CBOR();
@@ -546,6 +604,33 @@ unsigned int AuthenticatorAPI::getLength() {
 }
 
 /**
+ * @brief getter
+ * 
+ * @return TPK* Trustee Public Key
+ */
+TPK *AuthenticatorAPI::getTPK() {
+    return this->tpk;
+}
+
+/**
+ * @brief getter
+ * 
+ * @return APK* Public Key
+ */
+APK *AuthenticatorAPI::getAPK() {
+    return this->apk;
+}
+
+/**
+ * @brief getter
+ * 
+ * @return SKA* User Secret Key
+ */
+SKA *AuthenticatorAPI::getSKA() {
+    return this->ska;
+}
+
+/**
  * @brief setter - command
  * 
  * @param command 
@@ -570,6 +655,33 @@ void AuthenticatorAPI::setParameter(uint8_t *parameter) {
  */
 void AuthenticatorAPI::setLength(unsigned int length) {
     this->length = length;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param tpk Trustee Public Key
+ */
+void AuthenticatorAPI::setTPK(TPK *tpk) {
+    this->tpk = tpk;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param apk Public Key
+ */
+void AuthenticatorAPI::setAPK(APK *apk) {
+    this->apk = apk;
+}
+
+/**
+ * @brief setter
+ * 
+ * @param ska User Secret Key
+ */
+void AuthenticatorAPI::setSKA(SKA *ska) {
+    this->ska = ska;
 }
 
 /**
