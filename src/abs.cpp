@@ -208,7 +208,7 @@ ECP *APK::getC() {
 /**
  * @brief getter
  * 
- * @return CBOR* cbor_apk 
+ * @return CBOR cbor_apk 
  */
 CBOR APK::getCBOR() {
     return this->cbor_apk;

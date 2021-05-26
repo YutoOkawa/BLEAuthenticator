@@ -232,33 +232,30 @@ Response AuthenticatorAPI::operateCommand() {
             CBOR cbor_tpk = params->data[MakeCredentialParam::KEY_TPK];
             uint8_t *raw_tpk = new uint8_t[cbor_tpk.get_bytestring_len()];
             cbor_tpk.get_bytestring(raw_tpk); // CBORデータが正しく取れていることは確認済み
-            CBOR decoded_tpk = CBOR(raw_tpk, cbor_tpk.get_bytestring_len(), true);
-            this->tpk = new TPK(decoded_tpk);
+            this->tpk = new TPK(CBOR(raw_tpk, cbor_tpk.get_bytestring_len(), true));
             this->tpk->parse();
-            delete raw_tpk;
-            // delete tpk;
+            /* TODO:適切な解放 */
+            // delete raw_tpk; /* 解放するとCBORデータごと吹き飛ぶ */
         }
 
         if (params->data[MakeCredentialParam::KEY_APK].is_bytestring()) {
             CBOR cbor_apk = params->data[MakeCredentialParam::KEY_APK];
             uint8_t *raw_apk = new uint8_t[cbor_apk.get_bytestring_len()];
             cbor_apk.get_bytestring(raw_apk);
-            CBOR decoded_apk = CBOR(raw_apk, cbor_apk.get_bytestring_len(), true);
-            this->apk = new APK(decoded_apk);
+            this->apk = new APK(CBOR(raw_apk, cbor_apk.get_bytestring_len(), true));
             this->apk->parse();
-            delete raw_apk;
-            // delete apk;
+            /* TODO:適切な解放 */
+            // delete raw_apk;　/* 解放するとCBORデータごと吹き飛ぶ */
         }
 
         if (params->data[MakeCredentialParam::KEY_SKA].is_bytestring()) {
             CBOR cbor_ska = params->data[MakeCredentialParam::KEY_SKA];
             uint8_t *raw_ska = new uint8_t[cbor_ska.get_bytestring_len()];
             cbor_ska.get_bytestring(raw_ska);
-            CBOR decoded_ska = CBOR(raw_ska, cbor_ska.get_bytestring_len(), true);
-            this->ska = new SKA(decoded_ska);
+            this->ska = new SKA(CBOR(raw_ska, cbor_ska.get_bytestring_len(), true));
             this->ska->parse();
-            delete raw_ska;
-            // delete ska;
+            /* TODO:適切な解放 */
+            // delete raw_ska;　/* 解放するとCBORデータごと吹き飛ぶ */
         }
 
         /* API呼び出し */
@@ -355,8 +352,8 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     };
     uint8_t length[2] = {0x00, 0x00};
 
-    /* 公開鍵サイズの取得 */
-    size_t apk_size = this->apk->getCBOR().get_bytestring_len();
+    /* TODO:正しい公開鍵サイズの取得 */
+    size_t apk_size = this->apk->getCBOR().length();
     for (size_t i=0; i<apk_size; i++) { /* publicKeyの長さを測定 */
         length[1]++;
     }
@@ -364,7 +361,9 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     /* AuthDataのデータサイズ定義 */
     size_t authData_length = AuthDataSizeParam::AUTHDATA_RPIDHASH + AuthDataSizeParam::AUTHDATA_FLAGS
      + AuthDataSizeParam::AUTHDATA_COUNTER + AttestedCredentialDataSizeParam::ATTESTED_AAGUID
-     + AttestedCredentialDataSizeParam::ATTESTED_LENGTH + apk_size;
+     + AttestedCredentialDataSizeParam::ATTESTED_LENGTH
+     + apk_size /* TODO:APKも送信データに含める場合 */
+     ;
 
     /* AuthDataのデータ定義 */
     uint8_t *authData = new uint8_t[authData_length];
@@ -387,8 +386,7 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
         authData[authData_pointer] = length[i];
         authData_pointer++;
     }
-    uint8_t *raw_apk = new uint8_t[apk_size];
-    this->apk->getCBOR().get_bytestring(raw_apk); /* cbor->uint8_t */
+    const uint8_t *raw_apk = this->apk->getCBOR().to_CBOR();
     for (size_t i=0; i<apk_size; i++) { /* APKの格納 */
         authData[authData_pointer] = raw_apk[i];
         authData_pointer++;
@@ -399,14 +397,13 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     attStmt.append("alg", "abs");
     attStmt.append("sig", "no data.");
     attStmt.append("key", "no data.");
-    const uint8_t *cbor_attStmt = attStmt.to_CBOR();
 
     /* CBORデータの作成 */
     CBOR cbor_authData = CBOR();
     cbor_authData.encode(authData, authData_length);
     response_data.append("authaData", cbor_authData);
     response_data.append("fmt", "packed");
-    response_data.append("attStmt", cbor_attStmt);
+    response_data.append("attStmt", attStmt);
     
     // CBORエンコードしResponseを作成する
     response.responseData = response_data.to_CBOR();
