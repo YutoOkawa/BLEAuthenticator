@@ -163,6 +163,38 @@ struct ParsedMakeCredentialParams {
     ~ParsedMakeCredentialParams();
 };
 
+struct ParsedGetAssertionParams {
+    /**
+     * @brief rpId - String
+     */
+    String rpId;
+
+    /**
+     * @brief clientDataHash - ByteArray
+     */
+    uint8_t *hash;
+
+    /**
+     * @brief request data of CBOR - CBOR
+     */
+    CBOR data;
+
+    /**
+     * @brief rpId of CBOR - CBOR
+     */
+    CBOR cbor_rpId;
+
+    /**
+     * @brief clietnDataHash of CBOR - CBOR
+     */
+    CBOR cbor_clientDataHash;
+
+    /**
+     * @brief Destroy the Parsed Make Credential Params object
+     */
+    ~ParsedGetAssertionParams();
+};
+
 /**
  *  @class AuthenticatorAPI
  *  @brief AuthenticatorAPIの各メソッドを実行するクラス
@@ -212,7 +244,7 @@ class AuthenticatorAPI {
         ~AuthenticatorAPI();
         Response operateCommand();
         Response authenticatorMakeCredential(ParsedMakeCredentialParams *params);
-        Response authenticatorGetAssertion();
+        Response authenticatorGetAssertion(ParsedGetAssertionParams *params);
         Response authenticatorGetInfo();
         Response authenticatorClientPIN();
         Response authenticatorReset();

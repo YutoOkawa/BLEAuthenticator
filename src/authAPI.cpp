@@ -264,7 +264,41 @@ Response AuthenticatorAPI::operateCommand() {
         return response;
 
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETASSERTION) {
-        return this->authenticatorGetAssertion();
+        /**
+         * MemberName           Data type           Required?
+         * -------------        ----------          ----------
+         * rpId:                String              Required
+         * clientDataHash:      Byte Array          Required
+         * allowList            Seq of PubkeyDesc   Optional
+         * extensions           CBOR map            Optional
+         * options              Map of options      Optional
+         * pinAuth              ByteArray           Optional
+         * pinProtocol          Unsigned Int        Optional
+         */
+        Serial.println("Get Assertion.");
+        ParsedGetAssertionParams *params = new ParsedGetAssertionParams;
+
+        params->data = CBOR(this->parameter, this->length, true);
+
+        /* rpId */
+        if (params->data[GetAssertionParam::KEY_RPID].is_string()) {
+            params->cbor_rpId = params->data[GetAssertionParam::KEY_RPID];
+            params->cbor_rpId.get_string(params->rpId);
+            stringSerialDebug("rpId:", params->rpId);
+        }
+
+        /* clientDataHash */
+        if (params->data[GetAssertionParam::KEY_CLIENT_DATA_HASH].is_bytestring()) {
+            params->cbor_clientDataHash = params->data[GetAssertionParam::KEY_CLIENT_DATA_HASH];
+            params->hash = new uint8_t[params->cbor_clientDataHash.get_bytestring_len()];
+            params->cbor_clientDataHash.get_bytestring(params->hash);
+            uint8SerialDebug("hash:", params->hash, params->cbor_clientDataHash.get_bytestring_len());
+        }
+
+        response = this->authenticatorGetAssertion(params);
+
+        return response;
+        
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETINFO) {
         return this->authenticatorGetInfo();
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_CLIENTPIN) {
@@ -421,7 +455,53 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
  * 
  * @return Response - authenticatorGetAssertionに対応した返り値
  */
-Response AuthenticatorAPI::authenticatorGetAssertion() {
+Response AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *params) {
+    /**
+     * authenticatorGetAssertion Response
+     */
+    Response response;
+
+    /**
+     * MemberName           Required?
+     * -------------        ----------
+     * credential           Optional
+     * authData:            Required
+     * signature:           Required
+     * user:                Optional
+     * numberOfCredentials  Optional
+     */
+    CBORPair response_data;
+    
+    /* 1.rpIdに結びついたクレデンシャル情報を探し出す(allowListにあるものを優先) */
+
+    /* 2.pinAuthの値チェック */
+
+    /* 3.pinProtocolのサポートチェック */
+
+    /* 4.pinAuthがなくてclietnPinが設定されていればResponseにuvをセットする */
+
+    /* 5.optionsパラメータを実行する */
+
+    /* 6.extensionsがあれば実行する */
+
+    /* 7.正しいユーザの同意を撮る */
+
+    /* 8.1でクレデンシャルがなければエラー */
+
+    /* 9.複数のクレデンシャルがあれば逆順から処理 */
+
+    /* 10.displayがない場合 */
+    /* parameterを保管しておく */
+    /* counterをインクリメントする */
+    /* Timerをスタートする */
+    /* User情報を更新する */
+
+    /* 11.displayがある場合 */
+    /* ユーザ情報とrpIdを表示する */
+    /* 長い時間触れていなければエラー返す */
+
+    /* 12.署名生成 */
+
     throw implement_error("Not implement GetAssertion Content.");
 }
 
