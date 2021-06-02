@@ -298,7 +298,7 @@ Response AuthenticatorAPI::operateCommand() {
         response = this->authenticatorGetAssertion(params);
 
         return response;
-        
+
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_GETINFO) {
         return this->authenticatorGetInfo();
     } else if (this->command == AuthenticatorAPICommandParam::COMMAND_CLIENTPIN) {
@@ -597,7 +597,6 @@ Response AuthenticatorAPI::authenticatorGetInfo() {
 
 
     response.responseData = response_data.to_CBOR();
-    responseSerialDebug(response, response_data.length());
 
     response.length = response_data.length();
 

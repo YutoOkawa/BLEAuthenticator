@@ -2,6 +2,7 @@
 #include "ble.hpp"
 
 CTAPBLE Device;
+int maxResponseSize = 255;
 
 void notify();
 
@@ -30,8 +31,30 @@ void loop() {
 /* ControlPointで値の処理が終了すればフラグが立ち上がり、Statusに値をセットしてNotifyを行う */
 void notify() {
     if (Device.getControlPoint()->getFlag()) {
-        Device.getStatusCharacteristic()->setValue(Device.getControlPoint()->getResponseData(), Device.getControlPoint()->getResponseDataLength());
-        Device.getStatusCharacteristic()->notify();
+        /* 送信データとサイズを取得 */
+        unsigned int length = Device.getControlPoint()->getResponseDataLength();
+        uint8_t *data = Device.getControlPoint()->getResponseData();
+        if (length > maxResponseSize) { /* 最大サイズより大きい場合は分割して送信 */
+            int count = (length/maxResponseSize); /* 最大サイズで送信する回数 */
+            int lastSize = length - (count * maxResponseSize); /* あまりサイズ */
+            for (int i=0; i<count+1; i++) {
+                int dataSize = 0;
+                if (i<count) {
+                    dataSize = maxResponseSize;
+                } else {
+                    dataSize = lastSize;
+                }
+                uint8_t *dividedData = new uint8_t[dataSize];
+                memcpy(dividedData, data, dataSize); /* 送信パケット作成 */
+                data += dataSize;
+                Device.getStatusCharacteristic()->setValue(dividedData, dataSize);
+                Device.getStatusCharacteristic()->notify();
+                delete dividedData;
+            }
+        } else { /* 最大サイズより小さい場合はそのまま送信 */
+            Device.getStatusCharacteristic()->setValue(data, length);
+            Device.getStatusCharacteristic()->notify();
+        }
         Device.getControlPoint()->setFlag(false);
     }
 }

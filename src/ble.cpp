@@ -275,12 +275,6 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
             Serial.println(e.what());
         }
 
-        Serial.println("");
-        for (size_t i=0; i < response.length; ++i) {
-            Serial.printf("%.2x", response.responseData[i]);
-        }
-        Serial.println("");
-
         // 書き込みが終わればフラグを立てる
         this->writeFlag = true;
         this->continuationFlag = false;
