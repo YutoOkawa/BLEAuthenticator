@@ -435,7 +435,7 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     /* CBORデータの作成 */
     CBOR cbor_authData = CBOR();
     cbor_authData.encode(authData, authData_length);
-    response_data.append("authaData", cbor_authData);
+    response_data.append("authData", cbor_authData);
     response_data.append("fmt", "packed");
     response_data.append("attStmt", attStmt);
     
