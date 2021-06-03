@@ -384,18 +384,13 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
         0xF8, 0xA0, 0x11, 0xF3, 0x8C, 0x0A, 0x4D, 
         0x15, 0x80, 0x06, 0x17, 0x11, 0x1F, 0x9E, 0xDC, 0x7D
     };
-    uint8_t length[2] = {0x00, 0x00};
-
-    /* TODO:正しい公開鍵サイズの取得 */
-    size_t apk_size = this->apk->getCBOR().length();
-    for (size_t i=0; i<apk_size; i++) { /* publicKeyの長さを測定 */
-        length[1]++;
-    }
+    uint8_t credentialIDLength[AttestedCredentialDataSizeParam::ATTESTED_LENGTH] = {0x00, 0x40}; /* credentialIDのサイズ */
+    size_t apk_size = this->apk->getCBOR().length(); /* 公開鍵のサイズ */
 
     /* AuthDataのデータサイズ定義 */
     size_t authData_length = AuthDataSizeParam::AUTHDATA_RPIDHASH + AuthDataSizeParam::AUTHDATA_FLAGS
      + AuthDataSizeParam::AUTHDATA_COUNTER + AttestedCredentialDataSizeParam::ATTESTED_AAGUID
-     + AttestedCredentialDataSizeParam::ATTESTED_LENGTH
+     + AttestedCredentialDataSizeParam::ATTESTED_LENGTH + 64
      + apk_size /* TODO:APKも送信データに含める場合 */
      ;
 
@@ -417,9 +412,18 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
         authData_pointer++;
     }
     for (size_t i=0; i<AttestedCredentialDataSizeParam::ATTESTED_LENGTH; i++) { /* lengthの格納 */
-        authData[authData_pointer] = length[i];
+        authData[authData_pointer] = credentialIDLength[i];
         authData_pointer++;
     }
+    /* 検証項目:ここでいうcredentialIDとはWebAuthnの返り値に含まれるIDと同一なのか？ */
+    /* 検証結果:同一であることが判明 -> Arduino内部で生成し返り値データとして送信？ */
+    for (size_t i=0; i<64; i++) {
+        /* 乱数値の生成 */
+        uint32_t randomNumber = esp_random();
+        authData[authData_pointer] = (uint8_t)(randomNumber);
+        authData_pointer++;
+    }
+
     const uint8_t *raw_apk = this->apk->getCBOR().to_CBOR();
     for (size_t i=0; i<apk_size; i++) { /* APKの格納 */
         authData[authData_pointer] = raw_apk[i];
