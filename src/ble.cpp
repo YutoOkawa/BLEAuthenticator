@@ -424,10 +424,23 @@ Response ControlPointCallbacks::parseMsgCommand() {
         this->authAPI = new AuthenticatorAPI(this->request.data.commandValue);
     }
 
+    if (authAPI->getCommand() == AuthenticatorAPICommandParam::COMMAND_GETASSERTION) {
+        authAPI->setTPK(this->getTPK());
+        authAPI->setAPK(this->getAPK());
+        authAPI->setSKA(this->getSKA());
+    }
+
     try {
         this->response = this->authAPI->operateCommand();
     } catch (implement_error e) { /* 未実装コマンドだった場合 */
         throw implement_error(e.what());
+    }
+
+    /* 鍵情報のセット */
+    if (authAPI->getCommand() == AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL) {
+        setTPK(this->authAPI->getTPK());
+        setAPK(this->authAPI->getAPK());
+        setSKA(this->authAPI->getSKA());
     }
 
     // Serial.println("parseMsgCommand End.");
@@ -463,6 +476,30 @@ size_t ControlPointCallbacks::getResponseDataLength() {
 
 bool ControlPointCallbacks::getFlag() {
     return this->writeFlag;
+}
+
+TPK *ControlPointCallbacks::getTPK() {
+    return this->tpk;
+}
+
+APK *ControlPointCallbacks::getAPK() {
+    return this->apk;
+}
+
+SKA *ControlPointCallbacks::getSKA() {
+    return this->ska;
+}
+
+void ControlPointCallbacks::setTPK(TPK *tpk) {
+    this->tpk = tpk;
+}
+
+void ControlPointCallbacks::setAPK(APK *apk) {
+    this->apk = apk;
+}
+ 
+void ControlPointCallbacks::setSKA(SKA *ska) {
+    this->ska = ska;
 }
 
 void ControlPointCallbacks::setFlag(bool flag) {

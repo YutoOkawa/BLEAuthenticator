@@ -52,6 +52,20 @@ class ControlPointCallbacks: public BLECharacteristicCallbacks {
         size_t fragment_len;
         AuthenticatorAPI *authAPI;
         Response response;
+        /* 鍵データ */
+        /**
+         * @brief Trustee Public Key
+         */
+        TPK *tpk;
+        /**
+         * @brief User Public Key
+         */
+        APK *apk;
+        /**
+         * @brief User Secret Key
+         */
+        SKA *ska;
+        
 
     public:
         ~ControlPointCallbacks();
@@ -69,6 +83,12 @@ class ControlPointCallbacks: public BLECharacteristicCallbacks {
         bool getFlag();
         uint8_t *getResponseData();
         size_t getResponseDataLength();
+        TPK *getTPK();
+        APK *getAPK();
+        SKA *getSKA();
+        void setTPK(TPK *tpk);
+        void setAPK(APK *apk);
+        void setSKA(SKA *SKA);
         void setFlag(bool flag);
 };
 
@@ -122,7 +142,7 @@ class CTAPBLE {
         ConnectServerCallbacks *connectServer;
         ControlPointCallbacks *controlPoint;
         StatusCallbacks *status;
-        
+
     public:
         ~CTAPBLE();
         void init();
