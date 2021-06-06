@@ -390,7 +390,7 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     size_t authData_length = AuthDataSizeParam::AUTHDATA_RPIDHASH + AuthDataSizeParam::AUTHDATA_FLAGS
      + AuthDataSizeParam::AUTHDATA_COUNTER + AttestedCredentialDataSizeParam::ATTESTED_AAGUID
      + AttestedCredentialDataSizeParam::ATTESTED_LENGTH + 64
-     + apk_size /* TODO:APKも送信データに含める場合 */
+     + apk_size
      ;
 
     /* AuthDataのデータ定義 */
@@ -436,7 +436,6 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     attStmt.append("key", "no data.");
 
     /* CBORデータの作成 */
-    /* TODO:Responseデータの作り直し(0x01などをキーにする必要がある) */
     CBOR cbor_authData = CBOR();
     cbor_authData.encode(authData, authData_length);
     response_data.append(MakeCredentialResponseParam::KEY_FMT, "packed");
