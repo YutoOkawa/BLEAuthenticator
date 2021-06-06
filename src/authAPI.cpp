@@ -60,6 +60,9 @@ ParsedMakeCredentialParams::~ParsedMakeCredentialParams() {
     delete this->pubKeyCredParams;
 }
 
+ParsedGetAssertionParams::~ParsedGetAssertionParams() {
+    delete[] this->hash;
+}
 
 /* ----------------------DebugUtility---------------------- */
 /**
@@ -186,8 +189,7 @@ Response AuthenticatorAPI::operateCommand() {
             params->cbor_clientDataHash = params->data[MakeCredentialParam::KEY_CLIENT_DATA_HASH];
             params->hash = new uint8_t[params->cbor_clientDataHash.get_bytestring_len()];
             params->cbor_clientDataHash.get_bytestring(params->hash);
-
-            uint8SerialDebug("hash:", params->hash, params->cbor_clientDataHash.get_bytestring_len());
+            // uint8SerialDebug("hash:", params->hash, params->cbor_clientDataHash.get_bytestring_len());
         }
 
         /* rp  */
@@ -196,9 +198,8 @@ Response AuthenticatorAPI::operateCommand() {
             params->cbor_rp = params->data[MakeCredentialParam::KEY_RP];
             params->cbor_rp["id"].get_string(params->rp->id);
             params->cbor_rp["name"].get_string(params->rp->name);
-
-            stringSerialDebug("rp.id:", params->rp->id);
-            stringSerialDebug("rp.name:", params->rp->name);
+            // stringSerialDebug("rp.id:", params->rp->id);
+            // stringSerialDebug("rp.name:", params->rp->name);
         }
 
         /* user */
@@ -209,10 +210,9 @@ Response AuthenticatorAPI::operateCommand() {
             params->cbor_user["id"].get_bytestring(params->user->id);
             params->cbor_user["name"].get_string(params->user->name);
             params->cbor_user["displayName"].get_string(params->user->displayName);
-
-            uint8SerialDebug("user.id:", params->user->id, params->cbor_user["id"].get_bytestring_len());
-            stringSerialDebug("user.name:", params->user->name);
-            stringSerialDebug("user.displayName:", params->user->displayName);
+            // uint8SerialDebug("user.id:", params->user->id, params->cbor_user["id"].get_bytestring_len());
+            // stringSerialDebug("user.name:", params->user->name);
+            // stringSerialDebug("user.displayName:", params->user->displayName);
         }
 
         /* pubKeyCredParams */
@@ -223,9 +223,8 @@ Response AuthenticatorAPI::operateCommand() {
             CBOR pubKeyCredParam = params->cbor_pubKeyCredParams[0];
             params->pubKeyCredParams->alg = (int)pubKeyCredParam["alg"];
             pubKeyCredParam["type"].get_string(params->pubKeyCredParams->type);
-
-            intSerialDebug("pubKeyCredParam.alg:", params->pubKeyCredParams->alg);
-            stringSerialDebug("pubKeyCredParams.type:", params->pubKeyCredParams->type);
+            // intSerialDebug("pubKeyCredParam.alg:", params->pubKeyCredParams->alg);
+            // stringSerialDebug("pubKeyCredParams.type:", params->pubKeyCredParams->type);
         }
 
         if (params->data[MakeCredentialParam::KEY_TPK].is_bytestring()) {
@@ -284,7 +283,7 @@ Response AuthenticatorAPI::operateCommand() {
         if (params->data[GetAssertionParam::KEY_RPID].is_string()) {
             params->cbor_rpId = params->data[GetAssertionParam::KEY_RPID];
             params->cbor_rpId.get_string(params->rpId);
-            stringSerialDebug("rpId:", params->rpId);
+            // stringSerialDebug("rpId:", params->rpId);
         }
 
         /* clientDataHash */
@@ -292,7 +291,7 @@ Response AuthenticatorAPI::operateCommand() {
             params->cbor_clientDataHash = params->data[GetAssertionParam::KEY_CLIENT_DATA_HASH];
             params->hash = new uint8_t[params->cbor_clientDataHash.get_bytestring_len()];
             params->cbor_clientDataHash.get_bytestring(params->hash);
-            uint8SerialDebug("hash:", params->hash, params->cbor_clientDataHash.get_bytestring_len());
+            // uint8SerialDebug("hash:", params->hash, params->cbor_clientDataHash.get_bytestring_len());
         }
 
         response = this->authenticatorGetAssertion(params);
@@ -343,10 +342,10 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
         /* TODO:サポートするアルゴリズムの定数化 */
         switch (params->pubKeyCredParams->alg) {
             case -121:
-                Serial.printf("Algorithm %d is Supported by this authenticator.\n", params->pubKeyCredParams->alg);
+                // Serial.printf("Algorithm %d is Supported by this authenticator.\n", params->pubKeyCredParams->alg);
                 break;
             case -50:
-                Serial.printf("Algorithm %d is Supported by this authenticator.\n", params->pubKeyCredParams->alg);
+                // Serial.printf("Algorithm %d is Supported by this authenticator.\n", params->pubKeyCredParams->alg);
                 break;
             default: /* 該当しないalgであればエラーを返す */
                 Serial.println("This Algorithm is not Supported by this authenticator.");
@@ -437,15 +436,17 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     attStmt.append("key", "no data.");
 
     /* CBORデータの作成 */
+    /* TODO:Responseデータの作り直し(0x01などをキーにする必要がある) */
     CBOR cbor_authData = CBOR();
     cbor_authData.encode(authData, authData_length);
-    response_data.append("authData", cbor_authData);
-    response_data.append("fmt", "packed");
-    response_data.append("attStmt", attStmt);
+    response_data.append(MakeCredentialResponseParam::KEY_FMT, "packed");
+    response_data.append(MakeCredentialResponseParam::KEY_AUTH_DATA, cbor_authData);
+    response_data.append(MakeCredentialResponseParam::KEY_ATT_STMT, attStmt);
     
     // CBORエンコードしResponseを作成する
     response.responseData = response_data.to_CBOR();
     response.length = response_data.length();
+    // responseSerialDebug(response, response.length);
     delete params;
     delete authData;
     // Serial.println("MakeCredential command end.");
@@ -475,7 +476,7 @@ Response AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *p
      * numberOfCredentials  Optional
      */
     CBORPair response_data;
-    
+
     /* 1.rpIdに結びついたクレデンシャル情報を探し出す(allowListにあるものを優先) */
 
     /* 2.pinAuthの値チェック */
@@ -505,8 +506,46 @@ Response AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *p
     /* 長い時間触れていなければエラー返す */
 
     /* 12.署名生成 */
+    /* authDataの生成 */
+    uint8_t *rpIDHash = generateSha256(params->rpId);
+    uint8_t flags[AuthDataSizeParam::AUTHDATA_FLAGS] = {0x85};
+    uint8_t counter[AuthDataSizeParam::AUTHDATA_COUNTER] = {0x00, 0x00, 0x00, 0x01};
+    size_t authData_length = AuthDataSizeParam::AUTHDATA_RPIDHASH
+     + AuthDataSizeParam::AUTHDATA_FLAGS + AuthDataSizeParam::AUTHDATA_COUNTER;
+    uint8_t *authData = new uint8_t[authData_length];
+    size_t authData_pointer = 0;
+    for (size_t i=0; i<AuthDataSizeParam::AUTHDATA_RPIDHASH; i++) { /* rpIDHashの格納 */
+        authData[authData_pointer] = rpIDHash[i];
+        authData_pointer++;
+    }
+    authData[authData_pointer] = flags[0]; /* flagsの格納 */
+    authData_pointer++;
+    for (size_t i=0; i<AuthDataSizeParam::AUTHDATA_COUNTER; i++) { /* counterの格納 */
+        authData[authData_pointer] = counter[i];
+        authData_pointer++;
+    }
 
-    throw implement_error("Not implement GetAssertion Content.");
+    /* 署名生成用データの作成 */
+    uint8_t *signData = new uint8_t[params->cbor_clientDataHash.get_bytestring_len()+authData_length];
+    memcpy(signData, authData, authData_length); /* authDataのコピー */
+    signData += authData_length;
+    memcpy(signData, params->hash, params->cbor_clientDataHash.get_bytestring_len()); /* clientDataHashのコピー */
+
+    /* CBORデータの生成 */
+    /* TODO:Responseデータの作り直し(0x01などをキーにする必要がある) */
+    CBOR cbor_authData = CBOR();
+    cbor_authData.encode(authData, authData_length);
+    response_data.append(GetAssertionResponseParam::KEY_AUTH_DATA, cbor_authData);
+    response_data.append(GetAssertionResponseParam::KEY_SIGNATURE, "no data.");
+
+    response.responseData = response_data.to_CBOR();
+    response.length = response_data.length();
+    // responseSerialDebug(response, response.length);
+    delete params;
+    delete authData;
+
+    return response;
+    // throw implement_error("Not implement GetAssertion Content.");
 }
 
 /**
