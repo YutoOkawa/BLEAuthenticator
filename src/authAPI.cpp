@@ -529,19 +529,22 @@ Response AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *p
     memcpy(signData, authData, authData_length); /* authDataのコピー */
     signData += authData_length;
     memcpy(signData, params->hash, params->cbor_clientDataHash.get_bytestring_len()); /* clientDataHashのコピー */
+    signData -= authData_length;
 
     /* CBORデータの生成 */
     /* TODO:Responseデータの作り直し(0x01などをキーにする必要がある) */
     CBOR cbor_authData = CBOR();
     cbor_authData.encode(authData, authData_length);
+    CBOR cbor_signature = CBOR();
+    cbor_signature.encode(signData, authData_length+params->cbor_clientDataHash.get_bytestring_len());
     response_data.append(GetAssertionResponseParam::KEY_AUTH_DATA, cbor_authData);
-    response_data.append(GetAssertionResponseParam::KEY_SIGNATURE, "no data.");
+    response_data.append(GetAssertionResponseParam::KEY_SIGNATURE, cbor_signature);
 
     response.responseData = response_data.to_CBOR();
     response.length = response_data.length();
     // responseSerialDebug(response, response.length);
     delete params;
-    delete authData;
+    // delete authData;
 
     return response;
     // throw implement_error("Not implement GetAssertion Content.");
