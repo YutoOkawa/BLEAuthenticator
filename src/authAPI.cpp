@@ -161,8 +161,8 @@ AuthenticatorAPI::~AuthenticatorAPI() {
  * 
  * @return Response - AuthenticatorAPIの返り値
  */
-Response AuthenticatorAPI::operateCommand() {
-    Response response;
+Response *AuthenticatorAPI::operateCommand() {
+    Response *response;
 
     if (this->command == AuthenticatorAPICommandParam::COMMAND_MAKECREDENTIAL) {
         /**
@@ -320,11 +320,11 @@ Response AuthenticatorAPI::operateCommand() {
  * 
  * @return Response - authenticatorMakeCredentialに対応した返り値
  */
-Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParams *params) {
+Response *AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParams *params) {
     /**
      * authenticatorMakeCredential Response
      */
-    Response response;
+    Response *response = new Response();
 
     /**
      * MemberName       Required?
@@ -349,7 +349,7 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
                 break;
             default: /* 該当しないalgであればエラーを返す */
                 Serial.println("This Algorithm is not Supported by this authenticator.");
-                response.status = StatusCodeParam::CTAP2_ERR_UNSUPPORTED_ALGORITHM;
+                response->status = StatusCodeParam::CTAP2_ERR_UNSUPPORTED_ALGORITHM;
                 return response;
         }
     }
@@ -443,8 +443,8 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
     response_data.append(MakeCredentialResponseParam::KEY_ATT_STMT, attStmt);
     
     // CBORエンコードしResponseを作成する
-    response.responseData = response_data.to_CBOR();
-    response.length = response_data.length();
+    response->responseData = response_data.to_CBOR();
+    response->length = response_data.length();
     // responseSerialDebug(response, response.length);
     delete params;
     delete authData;
@@ -459,11 +459,11 @@ Response AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialParam
  * 
  * @return Response - authenticatorGetAssertionに対応した返り値
  */
-Response AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *params) {
+Response *AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *params) {
     /**
      * authenticatorGetAssertion Response
      */
-    Response response;
+    Response *response = new Response();
 
     /**
      * MemberName           Required?
@@ -527,9 +527,9 @@ Response AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *p
     /* 署名生成用データの作成 */
     uint8_t *signData = new uint8_t[params->cbor_clientDataHash.get_bytestring_len()+authData_length];
     memcpy(signData, authData, authData_length); /* authDataのコピー */
-    signData += authData_length;
-    memcpy(signData, params->hash, params->cbor_clientDataHash.get_bytestring_len()); /* clientDataHashのコピー */
-    signData -= authData_length;
+    // signData += authData_length;
+    memcpy(signData+authData_length, params->hash, params->cbor_clientDataHash.get_bytestring_len()); /* clientDataHashのコピー */
+    // signData -= authData_length;
 
     /* CBORデータの生成 */
     /* TODO:Responseデータの作り直し(0x01などをキーにする必要がある) */
@@ -540,11 +540,11 @@ Response AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *p
     response_data.append(GetAssertionResponseParam::KEY_AUTH_DATA, cbor_authData);
     response_data.append(GetAssertionResponseParam::KEY_SIGNATURE, cbor_signature);
 
-    response.responseData = response_data.to_CBOR();
-    response.length = response_data.length();
-    // responseSerialDebug(response, response.length);
+    response->responseData = response_data.to_CBOR();
+    response->length = response_data.length();
     delete params;
-    // delete authData;
+    delete authData;
+    // responseSerialDebug(*response, response->length);
 
     return response;
     // throw implement_error("Not implement GetAssertion Content.");
@@ -555,11 +555,11 @@ Response AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *p
  * 
  * @return Response - authenticatorGetInfoに対応した返り値
  */
-Response AuthenticatorAPI::authenticatorGetInfo() {
+Response *AuthenticatorAPI::authenticatorGetInfo() {
     /**
      * authenticatorGetInfo Response
      */
-    Response response;
+    Response *response = new Response();
 
     /**
      * MemberName       Required?
@@ -641,9 +641,9 @@ Response AuthenticatorAPI::authenticatorGetInfo() {
     response_data.append(GetInfoResponseParam::KEY_PIN_PROTOCOLS, cbor_pinProtocols);
 
 
-    response.responseData = response_data.to_CBOR();
-
-    response.length = response_data.length();
+    response->responseData = response_data.to_CBOR();
+    
+    response->length = response_data.length();
 
     // Serial.println("GetInfo command End.");
 
@@ -657,7 +657,7 @@ Response AuthenticatorAPI::authenticatorGetInfo() {
  * 
  * @return Response - authenticatorClientPINに対応した返り値
  */
-Response AuthenticatorAPI::authenticatorClientPIN() {
+Response *AuthenticatorAPI::authenticatorClientPIN() {
     throw implement_error("Not implement ClientPIN Content.");
 }
 
@@ -666,7 +666,7 @@ Response AuthenticatorAPI::authenticatorClientPIN() {
  * 
  * @return Reponse - authenticatorResetに対応した返り値
  */
-Response AuthenticatorAPI::authenticatorReset() {
+Response *AuthenticatorAPI::authenticatorReset() {
     throw implement_error("Not implement Reset Content.");
 }
 
@@ -675,7 +675,7 @@ Response AuthenticatorAPI::authenticatorReset() {
  * 
  * @return Response - authenticatorGetNextAssertionに対応した返り値
  */
-Response AuthenticatorAPI::authenticatorGetNextAssertion() {
+Response *AuthenticatorAPI::authenticatorGetNextAssertion() {
     throw implement_error("Not implement GetNextAssertion Content.");
 }
 
@@ -684,7 +684,7 @@ Response AuthenticatorAPI::authenticatorGetNextAssertion() {
  * 
  * @return Response - authenticatorVendorFirstに対応した返り値
  */
-Response AuthenticatorAPI::authenticatorVendorFirst() {
+Response *AuthenticatorAPI::authenticatorVendorFirst() {
     throw implement_error("Not implement VendorFirst Content.");
 }
 
@@ -693,7 +693,7 @@ Response AuthenticatorAPI::authenticatorVendorFirst() {
  * 
  * @return Response - authenticatorVendorLastに対応した返り値
  */
-Response AuthenticatorAPI::authenciatorVendorLast() {
+Response *AuthenticatorAPI::authenciatorVendorLast() {
     throw implement_error("Not implement VendorLast Content.");
 }
 

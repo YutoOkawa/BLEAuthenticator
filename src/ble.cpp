@@ -270,7 +270,7 @@ void ControlPointCallbacks::onWrite(BLECharacteristic *characteristic) {
 
     if (!this->continuationFlag) { /* パケット処理完了後 */
          try {
-            this->response = operateCTAPCommand(this->request);
+            operateCTAPCommand(this->request);
         } catch (implement_error e) { /* 未実装コマンドだった場合 */
             Serial.println(e.what());
         }
@@ -369,29 +369,28 @@ Request ControlPointCallbacks::connectRequest(Request request, ContinuationFragm
  * 
  * @return Response - CTAPに沿ったResponse形式
  */
-Response ControlPointCallbacks::operateCTAPCommand(Request request) {
+void ControlPointCallbacks::operateCTAPCommand(Request request) {
     switch (request.command) { /* Commandに応じた関数を呼び出す */
         case CommandConstParam::COMMAND_PING:
-            this->response = parsePingCommand(); break;
+            parsePingCommand(); break;
 
         case CommandConstParam::COMMAND_KEEPALIVE:
-            this->response = parseKeepAliveCommand(); break;
+            parseKeepAliveCommand(); break;
 
         case CommandConstParam::COMMAND_MSG:
-            this->response = parseMsgCommand(); break;
+            parseMsgCommand(); break;
 
         case CommandConstParam::COMMAND_CANCEL:
-            this->response = parseCancelCommand(); break;
+            parseCancelCommand(); break;
 
         case CommandConstParam::COMMAND_ERROR:
-            this->response = parseErrorCommand(); break;
+            parseErrorCommand(); break;
 
         default: /* Commandが存在しない場合 */
             throw implement_error("Not implement CTAP Command."); break;
     }
 
     // Serial.println("OperateCommand End.");
-    return this->response;
 }
 
 /**
@@ -399,7 +398,7 @@ Response ControlPointCallbacks::operateCTAPCommand(Request request) {
  * 
  * @return Response - PINGコマンドの返り値
  */
-Response ControlPointCallbacks::parsePingCommand() {
+void ControlPointCallbacks::parsePingCommand() {
     throw implement_error("Not implement PING Command.");
 }
 
@@ -408,7 +407,7 @@ Response ControlPointCallbacks::parsePingCommand() {
  * 
  * @return Response - KEEPALIVEコマンドの返り値
  */
-Response ControlPointCallbacks::parseKeepAliveCommand() {
+void ControlPointCallbacks::parseKeepAliveCommand() {
     throw implement_error("Not implement KEEPALIVE Command.");
 }
 
@@ -417,7 +416,7 @@ Response ControlPointCallbacks::parseKeepAliveCommand() {
  * 
  * @return Response - MSGコマンドの返り値 
  */
-Response ControlPointCallbacks::parseMsgCommand() {
+void ControlPointCallbacks::parseMsgCommand() {
     if (checkHasParameters(this->request.data.commandValue)) { /* パラメータを必要とするもの */
         this->authAPI = new AuthenticatorAPI(this->request.data.commandValue, this->request.data.commandParameter, this->request_len);
     } else { /* パラメータを必要としなもの */
@@ -444,8 +443,6 @@ Response ControlPointCallbacks::parseMsgCommand() {
     }
 
     // Serial.println("parseMsgCommand End.");
-
-    return this->response;
 }
 
 /**
@@ -453,7 +450,7 @@ Response ControlPointCallbacks::parseMsgCommand() {
  * 
  * @return Response - CANCELコマンドの返り値
  */
-Response ControlPointCallbacks::parseCancelCommand() {
+void ControlPointCallbacks::parseCancelCommand() {
     throw implement_error("Not implement CANCEL Command.");
 }
 
@@ -462,16 +459,16 @@ Response ControlPointCallbacks::parseCancelCommand() {
  * 
  * @return Response - ERRORコマンドの返り値
  */
-Response ControlPointCallbacks::parseErrorCommand() {
+void ControlPointCallbacks::parseErrorCommand() {
     throw implement_error("Not implement ERROR Command.");
 }
 
 uint8_t *ControlPointCallbacks::getResponseData() {
-    return (uint8_t*)this->response.responseData;
+    return (uint8_t*)this->response->responseData;
 }
 
 size_t ControlPointCallbacks::getResponseDataLength() {
-    return this->response.length;
+    return this->response->length;
 }
 
 bool ControlPointCallbacks::getFlag() {

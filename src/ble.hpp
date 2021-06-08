@@ -51,7 +51,7 @@ class ControlPointCallbacks: public BLECharacteristicCallbacks {
         ContinuationFragments *fragment;
         size_t fragment_len;
         AuthenticatorAPI *authAPI;
-        Response response;
+        Response *response;
         /* 鍵データ */
         /**
          * @brief Trustee Public Key
@@ -73,12 +73,12 @@ class ControlPointCallbacks: public BLECharacteristicCallbacks {
         Request parseRequest();
         ContinuationFragments *parseContinuationFragments(size_t length);
         Request connectRequest(Request request, ContinuationFragments *fragment, size_t request_len, size_t fragment_len);
-        Response operateCTAPCommand(Request request);
-        Response parsePingCommand();
-        Response parseKeepAliveCommand();
-        Response parseMsgCommand();
-        Response parseCancelCommand();
-        Response parseErrorCommand();
+        void operateCTAPCommand(Request request);
+        void parsePingCommand();
+        void parseKeepAliveCommand();
+        void parseMsgCommand();
+        void parseCancelCommand();
+        void parseErrorCommand();
 
         bool getFlag();
         uint8_t *getResponseData();

@@ -51,7 +51,8 @@ void notify() {
                 Device.getStatusCharacteristic()->notify();
                 delete dividedData;
             }
-        } else { /* 最大サイズより小さい場合はそのまま送信 */
+        } else { /* 最大サイズより小さい場合はそのまま送信 */ 
+            /* 単体送信の場合エラーが起きていそう */
             Device.getStatusCharacteristic()->setValue(data, length);
             Device.getStatusCharacteristic()->notify();
         }

@@ -242,15 +242,15 @@ class AuthenticatorAPI {
         AuthenticatorAPI(unsigned int command);
         AuthenticatorAPI(unsigned int command, uint8_t *parameter, unsigned int length);
         ~AuthenticatorAPI();
-        Response operateCommand();
-        Response authenticatorMakeCredential(ParsedMakeCredentialParams *params);
-        Response authenticatorGetAssertion(ParsedGetAssertionParams *params);
-        Response authenticatorGetInfo();
-        Response authenticatorClientPIN();
-        Response authenticatorReset();
-        Response authenticatorGetNextAssertion();
-        Response authenticatorVendorFirst();
-        Response authenciatorVendorLast();
+        Response *operateCommand();
+        Response *authenticatorMakeCredential(ParsedMakeCredentialParams *params);
+        Response *authenticatorGetAssertion(ParsedGetAssertionParams *params);
+        Response *authenticatorGetInfo();
+        Response *authenticatorClientPIN();
+        Response *authenticatorReset();
+        Response *authenticatorGetNextAssertion();
+        Response *authenticatorVendorFirst();
+        Response *authenciatorVendorLast();
 
         unsigned int getCommand();
         uint8_t *getParameter();
