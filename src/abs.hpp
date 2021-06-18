@@ -91,16 +91,16 @@ class Signature {
     public:
         Signature();
 
-        ECP getY();
-        ECP getW();
+        ECP *getY();
+        ECP *getW();
         MsgPack::arr_t<ECP> getS();
         MsgPack::arr_t<ECP2> getP();
         void setY(ECP Y);
         void setW(ECP W);
-        void setS(MsgPack::arr_t<ECP>);
-        void setP(MsgPack::arr_t<ECP2> P);
+        void setS(ECP S);
+        void setP(ECP2 P);
 };
 
-Signature sign(TPK tpk, APK apk, SKA ska, char *message, char *policy);
+Signature sign(TPK *tpk, APK *apk, SKA *ska, uint8_t *message, size_t msg_length, String policy, csprng RNG);
 
 #endif

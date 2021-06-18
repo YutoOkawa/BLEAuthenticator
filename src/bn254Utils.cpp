@@ -105,14 +105,59 @@ ECP2 *parseECP2Element(CBOR cbor, String name) {
 }
 
 /**
+ * @brief ECPデータをバイトデータ(uint8_t)に変換する
+ * 
+ * @param g ECPデータ
+ * @return uint8_t* ECPのバイトデータ
+ */
+uint8_t *ECPtoBuffer(ECP *g) {
+    uint8_t *ecp = new uint8_t[MODBYTES_B256_28+1];
+    char buf[MODBYTES_B256_28+1];
+    octet BUF = {0, sizeof(buf), buf};
+    ECP_toOctet(&BUF, g, true);
+    memcpy(ecp, buf, MODBYTES_B256_28+1);
+    return ecp;
+}
+
+uint8_t *ECP2toBuffer(ECP2 *h) {
+    uint8_t *ecp2 = new uint8_t[2*MODBYTES_B256_28+1];
+    char buf[2*(MODBYTES_B256_28+1)+1];
+    octet BUF = {0, sizeof(buf), buf};
+    ECP2_toOctet(&BUF, h, true);
+    memcpy(ecp2, buf, 2*(MODBYTES_B256_28+1)+1);
+    return ecp2;
+}
+
+/**
+ * @brief CBORPairに署名情報を追加する
+ * 
+ * @param pair CBORPairのポインタ
+ * @param g ECPデータ
+ * @param key キーの名前
+ */
+void setECPSignature(CBORPair *pair, ECP *g, String key) {
+    uint8_t *buf = ECPtoBuffer(g);
+    CBOR G = CBOR();
+    G.encode(buf, MODBYTES_B256_28+1); //Sのときここで落ちる
+    pair->append(key.c_str(), G);
+    delete buf;
+}
+
+void setECP2Signature(CBORPair *pair, ECP2 *h, String key) {
+    uint8_t *buf = ECP2toBuffer(h);
+    CBOR H = CBOR();
+    H.encode(buf, 2*(MODBYTES_B256_28+1)+1);
+    pair->append(key.c_str(), H);
+}
+
+/**
  * @brief Create a Hash object
  * 
  * @param msg メッセージ
  * @return BIG* ハッシュ化されたメッセージ
  */
-BIG *createHash(char *msg) {
+void createHash(char *msg, BIG *mu) {
     hash512 sh512;
-    BIG *msgHash;
     int i;
     char digest[100];
 
@@ -121,9 +166,7 @@ BIG *createHash(char *msg) {
         HASH512_process(&sh512, msg[i]);
     }
     HASH512_hash(&sh512, digest);
-    BIG_fromBytes(*msgHash, digest);
-
-    return msgHash;
+    BIG_fromBytes(*mu, digest);
 }
 
 /**

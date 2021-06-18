@@ -445,7 +445,7 @@ Response *AuthenticatorAPI::authenticatorMakeCredential(ParsedMakeCredentialPara
     // CBORエンコードしResponseを作成する
     response->responseData = response_data.to_CBOR();
     response->length = response_data.length();
-    // responseSerialDebug(response, response.length);
+    // responseSerialDebug(*response, response->length);
     delete params;
     delete authData;
     // Serial.println("MakeCredential command end.");
@@ -531,12 +531,30 @@ Response *AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *
     memcpy(signData+authData_length, params->hash, params->cbor_clientDataHash.get_bytestring_len()); /* clientDataHashのコピー */
     // signData -= authData_length;
 
+    /* 乱数生成機 */
+    char raw[100];
+    csprng RNG;
+    octet RAW = {0, sizeof(raw), raw};
+    RAW.len = 100;
+    for (int i=0; i<100; i++) RAW.val[i] = esp_random();
+    CREATE_CSPRNG(&RNG, &RAW);
+
+    /* 署名生成 */
+    Signature signature = sign(this->tpk, this->apk, this->ska, signData, authData_length+params->cbor_clientDataHash.get_bytestring_len(), "A", RNG);
+
+    /* 署名データのバイト変換 */
+    CBORPair cbor_signature = CBORPair(100);
+    setECPSignature(&cbor_signature, signature.getY(), "Y");
+    setECPSignature(&cbor_signature, signature.getW(), "W");
+    int count=1;
+    for (auto itr = signature.getS().begin(); itr != signature.getS().end(); ++itr) {
+        setECPSignature(&cbor_signature, &(*itr), "S"+String(count));
+        count++;
+    }
+
     /* CBORデータの生成 */
-    /* TODO:Responseデータの作り直し(0x01などをキーにする必要がある) */
     CBOR cbor_authData = CBOR();
     cbor_authData.encode(authData, authData_length);
-    CBOR cbor_signature = CBOR();
-    cbor_signature.encode(signData, authData_length+params->cbor_clientDataHash.get_bytestring_len());
     response_data.append(GetAssertionResponseParam::KEY_AUTH_DATA, cbor_authData);
     response_data.append(GetAssertionResponseParam::KEY_SIGNATURE, cbor_signature);
 
@@ -544,7 +562,7 @@ Response *AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *
     response->length = response_data.length();
     delete params;
     delete authData;
-    // responseSerialDebug(*response, response->length);
+    responseSerialDebug(*response, response->length);
 
     return response;
     // throw implement_error("Not implement GetAssertion Content.");

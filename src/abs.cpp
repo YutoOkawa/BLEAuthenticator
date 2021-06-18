@@ -17,6 +17,16 @@ void test() {
     ECP_output(&test1);
 }
 
+void outputBIG(BIG a) {
+    char s[MODBYTES_B256_28];
+    octet S = {0, sizeof(s), s};
+    BIG_toBytes(S.val, a);
+    for (size_t i=0; i<MODBYTES_B256_28; i++) {
+        Serial.printf("%.2x", S.val[i]);
+    }
+    Serial.println("");
+}
+
 /* ----------------------TPK---------------------- */
 TPK::TPK() {
 
@@ -370,33 +380,103 @@ void SKA::setCBOR(CBOR cbor_ska) {
  * @param RNG 乱数値
  * @return Signature 署名情報
  */
-Signature sign(TPK tpk, APK apk, SKA ska, char *message, char *policy, csprng RNG) {
-    char *hashmsg;
-    int i;
+Signature sign(TPK *tpk, APK *apk, SKA *ska, uint8_t *message, size_t msg_length, String policy, csprng RNG) {
     int msp[4][1] = {{0},{1},{1},{0}};
     BIG rd;
-    // std::vector<BIG> rdlist;
     Signature signature;
 
-    sprintf(hashmsg, "%s%s", *message, *policy);
-    BIG *mu = createHash(hashmsg);
-    for(int i=0; i<=sizeof(msp); i++) {
+    /* 位数の設定 */
+    BIG_rcopy(rd, CURVE_Order);
+    // outputBIG(rd);
+
+    /* 署名対象データの生成 */
+    size_t length = msg_length + policy.length();
+    char *sign_data = new char[length];
+    memcpy(sign_data, message, length);
+    memcpy(sign_data+msg_length, policy.c_str(), policy.length());
+
+    /* ハッシュ値生成 */
+    BIG mu;
+    createHash(sign_data, &mu);
+    // outputBIG(mu); /* byte化して中身を確かめる */
+
+    /* r_{0}をランダムに選ぶ */
+    BIG r0;
+    BIG_randtrunc(r0, rd, 2 * CURVE_SECURITY_BN254, &RNG);
+    // outputBIG(r0);
+
+    int32_t *rlist[4];
+    for (size_t i=0; i<4; i++) {
         BIG r;
-        BIG_randtrunc(r, rd, 2 * CURVE_SECURITY_BN254, &RNG);
-        // rdlist.push_back(r);
+        BIG_randtrunc(r, rd, 2* CURVE_SECURITY_BN254, &RNG);
+        // outputBIG(r);
+        rlist[i] = new int32_t;
+        rlist[i] = r;
     }
 
-    // Y = r[0] * KBase
-    ECP Y;
-    ECP_copy(&Y, ska.getKBase());
-    // PAIR_G1mul(&Y, rdlist[0]);
+    /* 署名値の計算 */
+    ECP Y; // Y = r[0] * KBase
+    ECP_copy(&Y, ska->getKBase());
+    PAIR_G1mul(&Y, r0);
     signature.setY(Y);
 
-    // W = r[0] * K0
-    ECP W;
-    ECP_copy(&W, ska.getK0());
-    // PAIR_G1mul(&W, rdlist[0]);
+    ECP W; // W = r[0] * K0
+    ECP_copy(&W, ska->getK0());
+    PAIR_G1mul(&W, r0);
     signature.setW(W);
 
+    // S_{i} = (K_{u(i)}^ui)^r0 * (Cg^μ)^r_{i}
+    for (size_t i=0; i<4; i++) {
+        ECP Si; // multi = r_{i} * (C + μg)
+        ECP_copy(&Si, tpk->getG());
+        PAIR_G1mul(&Si, mu);
+        ECP_add(&Si, apk->getC());
+        PAIR_G1mul(&Si, rlist[i]);
+
+        // ユーザ秘密鍵の検索 - 存在している場合のみ処理を行う
+        String key = "K" + String(i+1);
+        if (ska->getK().count(key) != 0) { /* キー値が存在している場合 */
+            ECP rK; // K_{u(i)}^r0
+            PAIR_G1mul(&rK, r0);
+            ECP_add(&Si, &rK);
+        }
+        signature.setS(Si);
+    }
     return signature;
+}
+
+Signature ::Signature() {
+
+}
+
+ECP *Signature::getY() {
+    return &this->Y;
+}
+
+ECP *Signature::getW() {
+    return &this->W;
+}
+
+MsgPack::arr_t<ECP> Signature::getS() {
+    return this->S;
+}
+
+MsgPack::arr_t<ECP2> Signature::getP() {
+    return this->P;
+}
+
+void Signature::setY(ECP Y) {
+    this->Y = Y;
+}
+
+void Signature::setW(ECP W) {
+    this->W = W;
+}
+
+void Signature::setS(ECP S) {
+    this->S.push_back(S);
+}
+
+void Signature::setP(ECP2 P) {
+    this->P.push_back(P);
 }

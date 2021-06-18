@@ -17,7 +17,10 @@ ECP getG1Element(csprng RNG);
 ECP2 getG2Element(csprng RNG);
 ECP *parseECPElement(CBOR cbor, String name);
 ECP2 *parseECP2Element(CBOR cbor, String name);
-BIG *createHash(char *msg);
+uint8_t *ECPtoBuffer(ECP *g);
+void setECPSignature(CBORPair *pair, ECP *g, String key);
+void setECP2Signature(CBORPair *pair, ECP2 *h, String key);
+void createHash(char *msg, BIG *mu);
 BIG *convertInt(int number);
 
 #endif
