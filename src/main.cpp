@@ -9,7 +9,7 @@ void notify();
 void setup() {
     // put your setup code here, to run once:
     M5.begin();
-    Serial.begin(9600);
+    Serial.begin(115200);
     Device.init();
     Device.startService();
     M5.Lcd.println("FIDO Authenticator");
@@ -24,7 +24,7 @@ void loop() {
     } else {
         // Serial.println("Device is not connected.");
     }
-    delay(2000);
+    delay(1);
 }
 
 /* 接続されれば起動 */

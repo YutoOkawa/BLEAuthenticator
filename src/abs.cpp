@@ -17,6 +17,11 @@ void test() {
     ECP_output(&test1);
 }
 
+/**
+ * @brief BIGを16進数で出力する
+ * 
+ * @param a ーBIG
+ */
 void outputBIG(BIG a) {
     char s[MODBYTES_B256_28];
     octet S = {0, sizeof(s), s};
@@ -52,14 +57,10 @@ TPK::~TPK() {
  * @brief cborデータから鍵データをパースする
  */
 void TPK::parse() {
-    // Serial.printf("g:");
-    this->g = parseECPElement(this->cbor_tpk, "g");
-    // ECP_output(this->g);
+    parseECPElement(&this->g, this->cbor_tpk, "g");
     for (int i=0; i<=8; i++) {
-        char *key = new char[2];
-        sprintf(key, "h%d", i);
-        // Serial.printf("%s:", key);
-        this->h.push_back(*parseECP2Element(this->cbor_tpk, key));
+        String key = "h" + String(i);
+        this->h.push_back(*parseECP2Element(this->cbor_tpk, key.c_str()));
     }
 }
 
@@ -69,7 +70,7 @@ void TPK::parse() {
  * @return ECP Gを返す
  */
 ECP *TPK::getG() {
-    return this->g;
+    return &this->g;
 }
 
 /**
@@ -104,7 +105,7 @@ CBOR TPK::getCBOR() {
  * 
  * @param g Gをセットする
  */
-void TPK::setG(ECP *g) {
+void TPK::setG(ECP g) {
     this->g = g;
 }
 
@@ -160,23 +161,14 @@ APK::~APK() {
  * @brief cborデータから鍵データをパースする
  */
 void APK::parse() {
-    this->A0 = parseECP2Element(this->cbor_apk, "A0");
-    // ECP2_output(this->A0);
+    this->A0 = *parseECP2Element(this->cbor_apk, "A0");
     for (int i=1; i<=4; i++) {
-        char *Akey = new char[2];
-        char *Bkey = new char[2];
-        sprintf(Akey, "A%d", i);
-        sprintf(Bkey, "B%d", i);
-        // Serial.printf("%s:", Akey);
-        this->A.push_back(*parseECP2Element(this->cbor_apk, Akey));
-        // ECP2_output(&this->A[i-1]);
-        // Serial.printf("%s:", Bkey);
-        this->B.push_back(*parseECP2Element(this->cbor_apk, Bkey));
-        // ECP2_output(&this->B[i-1]);
+        String Akey = "A" + String(i);
+        this->A.push_back(*parseECP2Element(this->cbor_apk, Akey.c_str()));
+        String Bkey = "B" + String(i);
+        this->B.push_back(*parseECP2Element(this->cbor_apk, Bkey.c_str()));
     }
-    // Serial.printf("C:");
-    this->C = parseECPElement(this->cbor_apk, "C");
-    // ECP_output(this->C);
+    parseECPElement(&this->C, this->cbor_apk, "C");
 }
 
 /**
@@ -185,7 +177,7 @@ void APK::parse() {
  * @return ECP2 A0を返す
  */
 ECP2 *APK::getA0() {
-    return this->A0;
+    return &this->A0;
 }
 
 /**
@@ -212,7 +204,7 @@ MsgPack::arr_t<ECP2> APK::getB() {
  * @return ECP Cを返す
  */
 ECP *APK::getC() {
-    return this->C;
+    return &this->C;
 }
 
 /**
@@ -229,7 +221,7 @@ CBOR APK::getCBOR() {
  * 
  * @param A0 A0をセットする
  */
-void APK::setA0(ECP2 *A0) {
+void APK::setA0(ECP2 A0) {
     this->A0 = A0;
 }
 
@@ -256,7 +248,7 @@ void APK::setB(MsgPack::arr_t<ECP2> B) {
  * 
  * @param C Cをセットする
  */
-void APK::setC(ECP *C) {
+void APK::setC(ECP C) {
     this->C = C;
 }
 
@@ -295,13 +287,10 @@ SKA::~SKA() {
  * 
  */
 void SKA::parse() {
-    // Serial.printf("KBase:");
-    this->KBase = parseECPElement(this->cbor_ska, "KBase");
-    // ECP_output(this->KBase);
-    // Serial.printf("K0:");
-    this->K0 = parseECPElement(this->cbor_ska, "K0");
-    // ECP_output(this->K0);
-    this->K["K2"] = *parseECPElement(this->cbor_ska, "K2");
+    parseECPElement(&this->KBase, this->cbor_ska, "KBase");
+    /* TODO:決めうちの値になっているところを直したい */
+    parseECPElement(&this->K0, this->cbor_ska, "K0");
+    parseECPElement(&this->K["K2"], this->cbor_ska, "K2");
 }
 
 /**
@@ -310,7 +299,7 @@ void SKA::parse() {
  * @return ECP* KBaseを返す
  */
 ECP *SKA::getKBase() {
-    return this->KBase;
+    return &this->KBase;
 }
 
 /**
@@ -319,7 +308,7 @@ ECP *SKA::getKBase() {
  * @return ECP* K0を返す
  */
 ECP *SKA::getK0() {
-    return this->K0;
+    return &this->K0;
 }
 
 /**
@@ -345,7 +334,7 @@ CBOR SKA::getCBOR() {
  * 
  * @param KBase KBaseをセットする
  */
-void SKA::setKBase(ECP *KBase) {
+void SKA::setKBase(ECP KBase) {
     this->KBase = KBase;
 }
 
@@ -354,7 +343,7 @@ void SKA::setKBase(ECP *KBase) {
  * 
  * @param K0 K0をセットする
  */
-void SKA::setK0(ECP *K0) {
+void SKA::setK0(ECP K0) {
     this->K0 = K0;
 }
 
@@ -380,69 +369,86 @@ void SKA::setCBOR(CBOR cbor_ska) {
  * @param RNG 乱数値
  * @return Signature 署名情報
  */
-Signature sign(TPK *tpk, APK *apk, SKA *ska, uint8_t *message, size_t msg_length, String policy, csprng RNG) {
+void generateSign(void *pvParameters) {
     int msp[4][1] = {{0},{1},{1},{0}};
     BIG rd;
-    Signature signature;
 
     /* 位数の設定 */
     BIG_rcopy(rd, CURVE_Order);
     // outputBIG(rd);
 
     /* 署名対象データの生成 */
-    size_t length = msg_length + policy.length();
+    size_t length = ((SignatureParams *)pvParameters)->signDataLength + ((SignatureParams *)pvParameters)->policy.length();
     char *sign_data = new char[length];
-    memcpy(sign_data, message, length);
-    memcpy(sign_data+msg_length, policy.c_str(), policy.length());
+    memcpy(sign_data, ((SignatureParams *)pvParameters)->signData, length);
+    memcpy(sign_data+((SignatureParams *)pvParameters)->signDataLength, ((SignatureParams *)pvParameters)->policy.c_str(), ((SignatureParams *)pvParameters)->policy.length());
 
     /* ハッシュ値生成 */
     BIG mu;
     createHash(sign_data, &mu);
-    // outputBIG(mu); /* byte化して中身を確かめる */
 
     /* r_{0}をランダムに選ぶ */
     BIG r0;
-    BIG_randtrunc(r0, rd, 2 * CURVE_SECURITY_BN254, &RNG);
-    // outputBIG(r0);
+    BIG_randtrunc(r0, rd, 2 * CURVE_SECURITY_BN254, &((SignatureParams *)pvParameters)->RNG);
 
     int32_t *rlist[4];
-    for (size_t i=0; i<4; i++) {
+    for (size_t i=0; i<4; i++) {// mspの値に応じて変更！
         BIG r;
-        BIG_randtrunc(r, rd, 2* CURVE_SECURITY_BN254, &RNG);
-        // outputBIG(r);
+        BIG_randtrunc(r, rd, 2* CURVE_SECURITY_BN254, &((SignatureParams *)pvParameters)->RNG);
         rlist[i] = new int32_t;
         rlist[i] = r;
     }
 
     /* 署名値の計算 */
     ECP Y; // Y = r[0] * KBase
-    ECP_copy(&Y, ska->getKBase());
+    ECP_copy(&Y, ((SignatureParams *)pvParameters)->ska->getKBase());
     PAIR_G1mul(&Y, r0);
-    signature.setY(Y);
+    ((SignatureParams *)pvParameters)->signature->setY(Y);
 
     ECP W; // W = r[0] * K0
-    ECP_copy(&W, ska->getK0());
+    ECP_copy(&W, ((SignatureParams *)pvParameters)->ska->getK0());
     PAIR_G1mul(&W, r0);
-    signature.setW(W);
+    ((SignatureParams *)pvParameters)->signature->setW(W);
 
     // S_{i} = (K_{u(i)}^ui)^r0 * (Cg^μ)^r_{i}
-    for (size_t i=0; i<4; i++) {
+    for (size_t i=0; i<4; i++) { // mspの値に応じて変更！
         ECP Si; // multi = r_{i} * (C + μg)
-        ECP_copy(&Si, tpk->getG());
+        ECP_copy(&Si, ((SignatureParams *)pvParameters)->tpk->getG());
         PAIR_G1mul(&Si, mu);
-        ECP_add(&Si, apk->getC());
+        ECP_add(&Si, ((SignatureParams *)pvParameters)->apk->getC());
         PAIR_G1mul(&Si, rlist[i]);
 
         // ユーザ秘密鍵の検索 - 存在している場合のみ処理を行う
         String key = "K" + String(i+1);
-        if (ska->getK().count(key) != 0) { /* キー値が存在している場合 */
+        if (((SignatureParams *)pvParameters)->ska->getK().count(key) != 0) { /* キー値が存在している場合 */
             ECP rK; // K_{u(i)}^r0
             PAIR_G1mul(&rK, r0);
             ECP_add(&Si, &rK);
         }
-        signature.setS(Si);
+        ((SignatureParams *)pvParameters)->signature->setS(Si);
     }
-    return signature;
+
+    // P_{j} = \prod i=1~l (Aj+Bj^u(i))^Mij*ri
+    for (size_t j=1; j<1+1; j++) { // mspの値に応じて変更！
+        ECP2 Pj;
+        for (size_t i=1; i<4+1; i++) { // mspの値に応じて変更！
+            ECP2 base;
+            BIG ui;
+            BIG exp; // Mji*ri
+            ECP2_copy(&base, &((SignatureParams *)pvParameters)->apk->getB().at(j-1)); // base<-Bj
+            convertInt(ui, i+1); // ui<-i
+            PAIR_G2mul(&base, ui); // Bj^u(i)
+            ECP2_add(&base, &((SignatureParams *)pvParameters)->apk->getA().at(j-1)); // Aj+Bj^u(i)
+            convertInt(exp, msp[i-1][j-1]); // exp<-Mij
+            BIG_mul(exp, exp, rlist[i-1]); // exp<-Mji*ri
+            PAIR_G2mul(&base, exp); // (Aj+Bj^u(i))^Mij*ri
+            ECP2_add(&Pj, &base);
+        }
+        ((SignatureParams *)pvParameters)->signature->setP(Pj);
+    }
+
+    xSemaphoreGive(*((SignatureParams *)pvParameters)->xBinarySemaphore);
+    vTaskDelete(NULL);
 }
 
 Signature ::Signature() {

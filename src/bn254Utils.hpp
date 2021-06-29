@@ -15,12 +15,14 @@ using namespace BN254;
 /* -----Utility------ */
 ECP getG1Element(csprng RNG);
 ECP2 getG2Element(csprng RNG);
-ECP *parseECPElement(CBOR cbor, String name);
+void parseECPElement(ECP *elem, CBOR cbor, String name);
 ECP2 *parseECP2Element(CBOR cbor, String name);
+/* TODO:以下の形式に変更 */
+// void parseECP2Element(ECP2 *elem, CBOR cbor, String name);
 uint8_t *ECPtoBuffer(ECP *g);
 void setECPSignature(CBORPair *pair, ECP *g, String key);
 void setECP2Signature(CBORPair *pair, ECP2 *h, String key);
 void createHash(char *msg, BIG *mu);
-BIG *convertInt(int number);
+int32_t *convertInt(int32_t *big_number, int int_number);
 
 #endif

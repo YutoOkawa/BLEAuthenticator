@@ -2,13 +2,10 @@
 #define INCLUDED_abs_h_
 
 #include "bn254Utils.hpp"
-// #include <list>
-// #include <vector>
-// #include <map>
 
 class TPK {
     private:
-        ECP *g;
+        ECP g;
         MsgPack::arr_t<ECP2> h;
         MsgPack::map_t<String, int> attriblist;
         CBOR cbor_tpk;
@@ -24,7 +21,7 @@ class TPK {
         MsgPack::arr_t<ECP2> getH();
         MsgPack::map_t<String, int> getAttriblist();
         CBOR getCBOR();
-        void setG(ECP *g);
+        void setG(ECP g);
         void setH(MsgPack::arr_t<ECP2> h);
         void setAttriblist(MsgPack::map_t<String, int> attriblist);
         void setCBOR(CBOR cbor_tpk);
@@ -32,10 +29,10 @@ class TPK {
 
 class APK {
     private:
-        ECP2 *A0;
+        ECP2 A0;
         MsgPack::arr_t<ECP2> A;
         MsgPack::arr_t<ECP2> B;
-        ECP *C;
+        ECP C;
         CBOR cbor_apk;
 
     public:
@@ -50,17 +47,17 @@ class APK {
         MsgPack::arr_t<ECP2> getB();
         ECP *getC();
         CBOR getCBOR();
-        void setA0(ECP2 *A0);
+        void setA0(ECP2 A0);
         void setA(MsgPack::arr_t<ECP2> A);
         void setB(MsgPack::arr_t<ECP2> B);
-        void setC(ECP *C);
+        void setC(ECP C);
         void setCBOR(CBOR cbor_apk);
 };
 
 class SKA {
     private:
-        ECP *KBase;
-        ECP *K0;
+        ECP KBase;
+        ECP K0;
         MsgPack::map_t<String, ECP> K;
         CBOR cbor_ska;
 
@@ -75,8 +72,8 @@ class SKA {
         ECP *getK0();
         MsgPack::map_t<String, ECP> getK();
         CBOR getCBOR();
-        void setKBase(ECP *KBase);
-        void setK0(ECP *K0);
+        void setKBase(ECP KBase);
+        void setK0(ECP K0);
         void setK(MsgPack::map_t<String, ECP> K);
         void setCBOR(CBOR cbor_ska);
 };
@@ -101,6 +98,61 @@ class Signature {
         void setP(ECP2 P);
 };
 
-Signature sign(TPK *tpk, APK *apk, SKA *ska, uint8_t *message, size_t msg_length, String policy, csprng RNG);
+struct SignatureParams {
+    /**
+     * @var tpk
+     * @brief Trustee Public Key
+     */
+    TPK *tpk;
 
+    /**
+     * @var apk
+     * @brief public Key
+     */
+    APK *apk;
+
+    /**
+     * @var ska
+     * @brief user secret key
+     */
+    SKA *ska;
+
+    /**
+     * @var signData
+     * @brief signature data.
+     */
+    uint8_t *signData;
+
+    /**
+     * @var signDataLength;
+     * @brief signatureData Length.
+     */
+    size_t signDataLength;
+
+    /**
+     * @var policy
+     * @brief ABS Policy.
+     */
+    String policy;
+
+    /**
+     * @var RNG
+     * @brief random generator.
+     */
+    csprng RNG;
+
+    /**
+     * @var signature
+     * @brief signature data.
+     */
+    Signature *signature;
+
+    /**
+     * @var xBinarySemaphore
+     * @brief Binary Semaphore
+     */
+    SemaphoreHandle_t *xBinarySemaphore;
+};
+
+void generateSign(void *pvParameters);
 #endif

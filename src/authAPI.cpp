@@ -540,15 +540,42 @@ Response *AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *
     CREATE_CSPRNG(&RNG, &RAW);
 
     /* 署名生成 */
-    Signature signature = sign(this->tpk, this->apk, this->ska, signData, authData_length+params->cbor_clientDataHash.get_bytestring_len(), "A", RNG);
+    Signature *signature = new Signature;
+    SemaphoreHandle_t xBinarySemaphore = xSemaphoreCreateBinary();
+    SignatureParams sigParams = {
+        this->tpk, /* Trustee Public Key */
+        this->apk, /* Public Key */
+        this->ska, /* User Secret Key */
+        signData,  /* signData */
+        authData_length+params->cbor_clientDataHash.get_bytestring_len(), /* signData length */
+        "A", /* ABS Policy */
+        RNG, /* random generator */
+        signature, /* signature */
+        &xBinarySemaphore
+    };
+    xTaskCreateUniversal(
+        generateSign,
+        "generateSign",
+        65536,
+        (void *)&sigParams,
+        3,
+        NULL,
+        1
+    );
+    xSemaphoreTake(xBinarySemaphore, portMAX_DELAY);
 
     /* 署名データのバイト変換 */
     CBORPair cbor_signature = CBORPair(100);
-    setECPSignature(&cbor_signature, signature.getY(), "Y");
-    setECPSignature(&cbor_signature, signature.getW(), "W");
+    setECPSignature(&cbor_signature, signature->getY(), "Y");
+    setECPSignature(&cbor_signature, signature->getW(), "W");
     int count=1;
-    for (auto itr = signature.getS().begin(); itr != signature.getS().end(); ++itr) {
-        setECPSignature(&cbor_signature, &(*itr), "S"+String(count));
+    for (auto& e : signature->getS()) { /* Sの値を格納 */
+        setECPSignature(&cbor_signature, &e, "S"+String(count));
+        count++;
+    }
+    count = 1;
+    for (auto& e : signature->getP()) { /* Pの値を格納 */
+        setECP2Signature(&cbor_signature, &e, "P"+String(count));
         count++;
     }
 
@@ -562,7 +589,7 @@ Response *AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *
     response->length = response_data.length();
     delete params;
     delete authData;
-    responseSerialDebug(*response, response->length);
+    // responseSerialDebug(*response, response->length);
 
     return response;
     // throw implement_error("Not implement GetAssertion Content.");
