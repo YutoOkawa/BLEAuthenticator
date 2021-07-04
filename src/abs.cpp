@@ -32,6 +32,13 @@ void outputBIG(BIG a) {
     Serial.println("");
 }
 
+void outputECP(ECP g) {
+    char test[MODBYTES_B256_28+1];
+    octet TEST = {0, sizeof(test), test};
+    ECP_toOctet(&TEST, &g, true);
+    OCT_output(&TEST);    
+}
+
 /* ----------------------TPK---------------------- */
 TPK::TPK() {
 
@@ -290,7 +297,7 @@ void SKA::parse() {
     parseECPElement(&this->KBase, this->cbor_ska, "KBase");
     /* TODO:決めうちの値になっているところを直したい */
     parseECPElement(&this->K0, this->cbor_ska, "K0");
-    parseECPElement(&this->K["K2"], this->cbor_ska, "K2");
+    parseECPElement(&this->K["K5"], this->cbor_ska, "K5");
 }
 
 /**
@@ -370,7 +377,7 @@ void SKA::setCBOR(CBOR cbor_ska) {
  * @return Signature 署名情報
  */
 void generateSign(void *pvParameters) {
-    int msp[4][1] = {{0},{1},{1},{0}};
+    int msp[4][1] = {{0},{1},{0},{1}};
     BIG rd;
 
     /* 位数の設定 */
@@ -385,17 +392,19 @@ void generateSign(void *pvParameters) {
 
     /* ハッシュ値生成 */
     BIG mu;
-    createHash(sign_data, &mu);
+    createHash(sign_data, length, &mu);
+    BIG_mod(mu, rd);
 
     /* r_{0}をランダムに選ぶ */
     BIG r0;
     BIG_randtrunc(r0, rd, 2 * CURVE_SECURITY_BN254, &((SignatureParams *)pvParameters)->RNG);
 
     int32_t *rlist[4];
+    BIG r; // forの内部に入れるとBIGの値が壊れてしまう→外に出すとrの値が全て一定となるので修正したい
     for (size_t i=0; i<4; i++) {// mspの値に応じて変更！
-        BIG r;
-        BIG_randtrunc(r, rd, 2* CURVE_SECURITY_BN254, &((SignatureParams *)pvParameters)->RNG);
+        // BIG r;
         rlist[i] = new int32_t;
+        BIG_randtrunc(r, rd, 2* CURVE_SECURITY_BN254, &((SignatureParams *)pvParameters)->RNG);
         rlist[i] = r;
     }
 
@@ -411,7 +420,7 @@ void generateSign(void *pvParameters) {
     ((SignatureParams *)pvParameters)->signature->setW(W);
 
     // S_{i} = (K_{u(i)}^ui)^r0 * (Cg^μ)^r_{i}
-    for (size_t i=0; i<4; i++) { // mspの値に応じて変更！
+    for (size_t i=0; i<4; i++) { // mspの値に応じて変更
         ECP Si; // multi = r_{i} * (C + μg)
         ECP_copy(&Si, ((SignatureParams *)pvParameters)->tpk->getG());
         PAIR_G1mul(&Si, mu);
@@ -419,9 +428,10 @@ void generateSign(void *pvParameters) {
         PAIR_G1mul(&Si, rlist[i]);
 
         // ユーザ秘密鍵の検索 - 存在している場合のみ処理を行う
-        String key = "K" + String(i+1);
+        String key = "K" + String(i+2);
         if (((SignatureParams *)pvParameters)->ska->getK().count(key) != 0) { /* キー値が存在している場合 */
             ECP rK; // K_{u(i)}^r0
+            ECP_copy(&rK, &((SignatureParams *)pvParameters)->ska->getK()[key]);
             PAIR_G1mul(&rK, r0);
             ECP_add(&Si, &rK);
         }
@@ -434,15 +444,22 @@ void generateSign(void *pvParameters) {
         for (size_t i=1; i<4+1; i++) { // mspの値に応じて変更！
             ECP2 base;
             BIG ui;
+            BIG mij;
             BIG exp; // Mji*ri
             ECP2_copy(&base, &((SignatureParams *)pvParameters)->apk->getB().at(j-1)); // base<-Bj
             convertInt(ui, i+1); // ui<-i
             PAIR_G2mul(&base, ui); // Bj^u(i)
             ECP2_add(&base, &((SignatureParams *)pvParameters)->apk->getA().at(j-1)); // Aj+Bj^u(i)
-            convertInt(exp, msp[i-1][j-1]); // exp<-Mij
-            BIG_mul(exp, exp, rlist[i-1]); // exp<-Mji*ri
+            convertInt(mij, msp[i-1][j-1]); // exp<-Mij
+            BIG_modmul(exp, mij, rlist[i-1], rd); // exp<-Mji*ri
             PAIR_G2mul(&base, exp); // (Aj+Bj^u(i))^Mij*ri
-            ECP2_add(&Pj, &base);
+            if (i==1) {
+                ECP2_copy(&Pj, &base);
+            } else if (!ECP2_isinf(&base)) {
+                ECP2_add(&Pj, &base);
+            } else {
+                
+            }
         }
         ((SignatureParams *)pvParameters)->signature->setP(Pj);
     }

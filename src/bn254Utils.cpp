@@ -142,13 +142,13 @@ void setECP2Signature(CBORPair *pair, ECP2 *h, String key) {
  * @param msg メッセージ
  * @return BIG* ハッシュ化されたメッセージ
  */
-void createHash(char *msg, BIG *mu) {
+void createHash(char *msg, size_t length, BIG *mu) {
     hash512 sh512;
     int i;
-    char digest[100];
+    char digest[64];
 
     HASH512_init(&sh512);
-    for(i=0; i<strlen(msg); i++) {
+    for(i=0; i<length; i++) {
         HASH512_process(&sh512, msg[i]);
     }
     HASH512_hash(&sh512, digest);
