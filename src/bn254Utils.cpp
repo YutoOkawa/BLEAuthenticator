@@ -171,3 +171,13 @@ int32_t *convertInt(int32_t *big_number, int int_number) {
         BIG_add(big_number, big_number, one);
     }
 }
+
+unsigned long start() {
+    unsigned long start_time = micros();
+    return start_time;
+}
+
+void stop(unsigned long start_time) {
+    unsigned long end_time = micros();
+    Serial.printf("%lu milli seconds\n", (end_time - start_time) / 1000);
+}

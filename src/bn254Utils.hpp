@@ -24,5 +24,6 @@ void setECPSignature(CBORPair *pair, ECP *g, String key);
 void setECP2Signature(CBORPair *pair, ECP2 *h, String key);
 void createHash(char *msg, size_t length, BIG *mu);
 int32_t *convertInt(int32_t *big_number, int int_number);
-
+unsigned long start();
+void stop(unsigned long start_time);
 #endif

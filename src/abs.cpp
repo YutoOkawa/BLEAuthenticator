@@ -380,6 +380,8 @@ void generateSign(void *pvParameters) {
     int msp[4][1] = {{0},{1},{0},{1}};
     BIG rd;
 
+    unsigned long start_time = start();
+
     /* 位数の設定 */
     BIG_rcopy(rd, CURVE_Order);
     // outputBIG(rd);
@@ -463,7 +465,7 @@ void generateSign(void *pvParameters) {
         }
         ((SignatureParams *)pvParameters)->signature->setP(Pj);
     }
-
+    stop(start_time);
     xSemaphoreGive(*((SignatureParams *)pvParameters)->xBinarySemaphore);
     vTaskDelete(NULL);
 }
