@@ -65,7 +65,7 @@ TPK::~TPK() {
  */
 void TPK::parse() {
     parseECPElement(&this->g, this->cbor_tpk, "g");
-    for (int i=0; i<=8; i++) {
+    for (int i=0; i<this->cbor_tpk.n_elements()-2; i++) {
         String key = "h" + String(i);
         this->h.push_back(*parseECP2Element(this->cbor_tpk, key.c_str()));
     }
@@ -169,7 +169,7 @@ APK::~APK() {
  */
 void APK::parse() {
     this->A0 = *parseECP2Element(this->cbor_apk, "A0");
-    for (int i=1; i<=4; i++) {
+    for (int i=1; i<=(this->cbor_apk.n_elements()-3)/2; i++) {
         String Akey = "A" + String(i);
         this->A.push_back(*parseECP2Element(this->cbor_apk, Akey.c_str()));
         String Bkey = "B" + String(i);
@@ -294,10 +294,19 @@ SKA::~SKA() {
  * 
  */
 void SKA::parse() {
+    String keylist[this->cbor_ska.n_elements()];
+    for (int i=0; i<this->cbor_ska.n_elements(); i++) {
+        this->cbor_ska.key_at(i).get_string(keylist[i]);
+        // Serial.printf("Key:%s\n", keylist[i].c_str());
+    }
+    /* 固定Key値のパース */
     parseECPElement(&this->KBase, this->cbor_ska, "KBase");
-    /* TODO:決めうちの値になっているところを直したい */
     parseECPElement(&this->K0, this->cbor_ska, "K0");
-    parseECPElement(&this->K["K5"], this->cbor_ska, "K5");
+    
+    /* 可変Key値のパース */
+    for (int i=2; i<this->cbor_ska.n_elements(); i++) {
+        parseECPElement(&this->K[keylist[i]], this->cbor_ska, keylist[i]);
+    }
 }
 
 /**
@@ -377,7 +386,8 @@ void SKA::setCBOR(CBOR cbor_ska) {
  * @return Signature 署名情報
  */
 void generateSign(void *pvParameters) {
-    int msp[4][1] = {{0},{1},{0},{1}};
+    /* TODO:mspの生成 */
+    int msp[4][1] = {{1},{1},{0},{0}};
     BIG rd;
 
     unsigned long start_time = start();

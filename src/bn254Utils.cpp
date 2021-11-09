@@ -179,5 +179,5 @@ unsigned long start() {
 
 void stop(unsigned long start_time) {
     unsigned long end_time = micros();
-    Serial.printf("%lu milli seconds\n", (end_time - start_time) / 1000);
+    Serial.printf("%lu micro seconds\n", (end_time - start_time));
 }
