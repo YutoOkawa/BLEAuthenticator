@@ -298,7 +298,7 @@ Response *AuthenticatorAPI::operateCommand() {
         if (params->data[GetAssertionParam::KEY_POLICY].is_string()) {
             params->cbor_policy = params->data[GetAssertionParam::KEY_POLICY];
             params->cbor_policy.get_string(params->policy);
-            stringSerialDebug("policy:", params->policy);
+            // stringSerialDebug("policy:", params->policy);
         }
 
         response = this->authenticatorGetAssertion(params);
@@ -555,7 +555,7 @@ Response *AuthenticatorAPI::authenticatorGetAssertion(ParsedGetAssertionParams *
         this->ska, /* User Secret Key */
         signData,  /* signData */
         authData_length+params->cbor_clientDataHash.get_bytestring_len(), /* signData length */
-        "A", /* ABS Policy */
+        params->policy, /* ABS Policy */
         RNG, /* random generator */
         signature, /* signature */
         &xBinarySemaphore

@@ -388,6 +388,8 @@ void SKA::setCBOR(CBOR cbor_ska) {
 void generateSign(void *pvParameters) {
     /* TODO:mspの生成 */
     int msp[4][1] = {{1},{1},{0},{0}};
+    String attributes[4] = {"USER", "PARENTS", "GUARDIANSHIP", "A"};
+    // Serial.println(((SignatureParams *)pvParameters)->policy);
     BIG rd;
 
     unsigned long start_time = start();
