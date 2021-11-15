@@ -386,13 +386,15 @@ void SKA::setCBOR(CBOR cbor_ska) {
  * @return Signature 署名情報
  */
 void generateSign(void *pvParameters) {
-    /* TODO:mspの生成 */
-    int msp[4][1] = {{1},{1},{0},{0}};
-    String attributes[4] = {"USER", "PARENTS", "GUARDIANSHIP", "A"};
-    // Serial.println(((SignatureParams *)pvParameters)->policy);
+    String attributes[] = {"USER", "PARENTS", "GUARDIANSHIP", "A"};
     BIG rd;
 
-    unsigned long start_time = start();
+    unsigned long start_time = start(); /* 計測開始地点 */
+
+    /* mspの生成 */
+    /* msp本体は配列の1番目から */
+    MsgPack::arr_t<MsgPack::arr_t<int>> msp(sizeof(attributes)/sizeof(attributes[0]), MsgPack::arr_t<int>(1));
+    getMSP(&msp, ((SignatureParams *)pvParameters)->policy, attributes);
 
     /* 位数の設定 */
     BIG_rcopy(rd, CURVE_Order);
@@ -413,9 +415,9 @@ void generateSign(void *pvParameters) {
     BIG r0;
     BIG_randtrunc(r0, rd, 2 * CURVE_SECURITY_BN254, &((SignatureParams *)pvParameters)->RNG);
 
-    int32_t *rlist[4];
-    BIG r; // forの内部に入れるとBIGの値が壊れてしまう→外に出すとrの値が全て一定となるので修正したい
-    for (size_t i=0; i<4; i++) {// mspの値に応じて変更！
+    int32_t *rlist[msp.size()];
+    BIG r;
+    for (size_t i=0; i<msp.size(); i++) {
         // BIG r;
         rlist[i] = new int32_t;
         BIG_randtrunc(r, rd, 2* CURVE_SECURITY_BN254, &((SignatureParams *)pvParameters)->RNG);
@@ -434,7 +436,7 @@ void generateSign(void *pvParameters) {
     ((SignatureParams *)pvParameters)->signature->setW(W);
 
     // S_{i} = (K_{u(i)}^ui)^r0 * (Cg^μ)^r_{i}
-    for (size_t i=0; i<4; i++) { // mspの値に応じて変更
+    for (size_t i=0; i<msp.size(); i++) {
         ECP Si; // multi = r_{i} * (C + μg)
         ECP_copy(&Si, ((SignatureParams *)pvParameters)->tpk->getG());
         PAIR_G1mul(&Si, mu);
@@ -453,9 +455,9 @@ void generateSign(void *pvParameters) {
     }
 
     // P_{j} = \prod i=1~l (Aj+Bj^u(i))^Mij*ri
-    for (size_t j=1; j<1+1; j++) { // mspの値に応じて変更！
+    for (size_t j=1; j<msp.at(0).size(); j++) {
         ECP2 Pj;
-        for (size_t i=1; i<4+1; i++) { // mspの値に応じて変更！
+        for (size_t i=1; i<msp.size()+1; i++) {
             ECP2 base;
             BIG ui;
             BIG mij;
@@ -464,7 +466,7 @@ void generateSign(void *pvParameters) {
             convertInt(ui, i+1); // ui<-i
             PAIR_G2mul(&base, ui); // Bj^u(i)
             ECP2_add(&base, &((SignatureParams *)pvParameters)->apk->getA().at(j-1)); // Aj+Bj^u(i)
-            convertInt(mij, msp[i-1][j-1]); // exp<-Mij
+            convertInt(mij, msp.at(i-1).at(j)); // exp<-Mij(j=0はダミーデータ)
             BIG_modmul(exp, mij, rlist[i-1], rd); // exp<-Mji*ri
             PAIR_G2mul(&base, exp); // (Aj+Bj^u(i))^Mij*ri
             if (i==1) {
